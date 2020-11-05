@@ -1,6 +1,6 @@
 {
   "name": "bbb-html5-client",
-  "description": "BigBlueButton HTML5 Client",
+  "description": "BigBlueButton HTML5 Client Hacked Edition",
   "license": "LGPL-3.0",
   "scripts": {
     "start": "if test \"$NODE_ENV\" = \"production\" ; then npm run start:prod; else npm run start:dev; fi",
@@ -9,8 +9,8 @@
     "test-visual-regression-desktop": "export BROWSER_NAME=firefox; wdio ./tests/webdriverio/wdio.vreg.conf.js; export BROWSER_NAME=chrome; wdio ./tests/webdriverio/wdio.vreg.conf.js",
     "generate-refs-visual-regression-desktop": "rm -rf tests/webdriverio/screenshots; npm run test-visual-regression-desktop",
     "start:prod": "meteor reset && ROOT_URL=http://127.0.0.1/html5client NODE_ENV=production meteor --production",
-    "start:dev": "ROOT_URL=http://127.0.0.1/html5client NODE_ENV=development meteor",
-    "start:dev-fast-mongo": "env ROOT_URL=http://127.0.0.1/html5client MONGO_OPLOG_URL=mongodb://127.0.1.1/local MONGO_URL=mongodb://127.0.1.1/meteor PORT=3000 ROOT_URL=http://127.0.0.1/html5client NODE_ENV=development meteor",
+    "start:dev": "ROOT_URL=http://bbb.belgiumcampus.ac.za/html5client NODE_ENV=development meteor --port 3001",
+    "start:dev-fast-mongo": "env ROOT_URL=http://127.0.0.1/html5client MONGO_OPLOG_URL=mongodb://127.0.1.1/local MONGO_URL=mongodb://127.0.1.1/meteor PORT=3000 ROOT_URL=http://127.0.0.1/html5client NODE_ENV=development meteor --port 3001",
     "test": "wdio ./tests/webdriverio/wdio.conf.js",
     "lint": "eslint . --ext .jsx,.js"
   },
@@ -116,7 +116,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bigbluebutton/bigbluebutton.git"
+    "url": "https://github.com/Botlhale-Village/BV-BigBlueButton.git"
   },
   "husky": {
     "hooks": {
