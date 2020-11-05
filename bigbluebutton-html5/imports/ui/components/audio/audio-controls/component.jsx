@@ -5,7 +5,6 @@ import { defineMessages, intlShape, injectIntl } from 'react-intl';
 import Button from '/imports/ui/components/button/component';
 import getFromUserSettings from '/imports/ui/services/users-settings';
 import withShortcutHelper from '/imports/ui/components/shortcut-help/service';
-import MutedAlert from '/imports/ui/components/muted-alert/component';
 import { styles } from './styles';
 
 const intlMessages = defineMessages({
@@ -64,11 +63,7 @@ class AudioControls extends PureComponent {
       inAudio,
       listenOnly,
       intl,
-      shortcuts,
       isVoiceUser,
-      inputStream,
-      isViewer,
-      isPresenter,
     } = this.props;
 
     let joinIcon = 'audio_off';
@@ -96,13 +91,12 @@ class AudioControls extends PureComponent {
         icon={muted ? 'mute' : 'unmute'}
         size="lg"
         circle
-        accessKey={shortcuts.togglemute}
+        /* accessKey={shortcuts.togglemute} */
       />
     );
 
     return (
       <span className={styles.container}>
-        {muted ? <MutedAlert {...{ inputStream, isViewer, isPresenter }} /> : null}
         {showMute && isVoiceUser ? toggleMuteBtn : null}
         <Button
           className={cx(inAudio || styles.btn)}
@@ -118,7 +112,7 @@ class AudioControls extends PureComponent {
           icon={joinIcon}
           size="lg"
           circle
-          accessKey={inAudio ? shortcuts.leaveaudio : shortcuts.joinaudio}
+          /* accessKey={inAudio ? shortcuts.leaveaudio : shortcuts.joinaudio} */
         />
         <Button
           className={cx(inAudio || styles.btn)}
