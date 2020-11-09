@@ -152,7 +152,7 @@ class Settings extends Component {
             aria-labelledby="appTab"
             selectedClassName={styles.selected}
           >
-            <Icon iconName="application" className={styles.icon} />
+            <Icon iconName="window-maximize" className={styles.icon} />
             <span id="appTab">{intl.formatMessage(intlMessages.appTabLabel)}</span>
           </Tab>
           {/* <Tab className={styles.tabSelector} aria-labelledby="videoTab"> */}
@@ -164,7 +164,7 @@ class Settings extends Component {
             aria-labelledby="dataSavingTab"
             selectedClassName={styles.selected}
           >
-            <Icon iconName="network" className={styles.icon} />
+            <Icon iconName="wifi" className={styles.icon} />
             <span id="dataSaving">{intl.formatMessage(intlMessages.dataSavingLabel)}</span>
           </Tab>
           {/* { isModerator ? */}

@@ -177,7 +177,7 @@ class ZoomTool extends PureComponent {
               aria-describedby="zoomOutDescription"
               aria-label={zoomOutAriaLabel}
               label={intl.formatMessage(intlMessages.zoomOutLabel)}
-              icon="substract"
+              icon="minus-circle"
               onClick={() => { }}
               disabled={(zoomValue <= minBound) || !isMeteorConnected}
               className={cx(styles.prevSlide, styles.presentationBtn)}
@@ -219,7 +219,7 @@ class ZoomTool extends PureComponent {
               aria-describedby="zoomInDescription"
               aria-label={zoomInAriaLabel}
               label={intl.formatMessage(intlMessages.zoomInLabel)}
-              icon="add"
+              icon="plus-circle"
               onClick={() => { }}
               disabled={(zoomValue >= maxBound) || !isMeteorConnected}
               className={cx(styles.skipSlide, styles.presentationBtn)}

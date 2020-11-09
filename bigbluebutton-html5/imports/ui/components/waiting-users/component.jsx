@@ -201,7 +201,7 @@ const WaitingUsers = (props) => {
               Session.set('openPanel', 'userlist');
             }}
             label={intl.formatMessage(intlMessages.title)}
-            icon="left_arrow"
+            icon="angle-left"
             className={styles.hideBtn}
           />
         </div>

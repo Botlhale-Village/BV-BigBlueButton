@@ -66,12 +66,12 @@ class AudioControls extends PureComponent {
       isVoiceUser,
     } = this.props;
 
-    let joinIcon = 'audio_off';
+    let joinIcon = 'phone-slash';
     if (inAudio) {
       if (listenOnly) {
-        joinIcon = 'listen';
+        joinIcon = 'headphones';
       } else {
-        joinIcon = 'audio_on';
+        joinIcon = 'phone-alt';
       }
     }
 
@@ -88,7 +88,7 @@ class AudioControls extends PureComponent {
         aria-label={label}
         color={!muted ? 'primary' : 'default'}
         ghost={muted}
-        icon={muted ? 'mute' : 'unmute'}
+        icon={muted ? 'microphone-slash' : 'microphone'}
         size="lg"
         circle
         /* accessKey={shortcuts.togglemute} */
@@ -123,7 +123,7 @@ class AudioControls extends PureComponent {
           aria-label="Raise Hand"
           color={!handRaised ? 'primary' : 'default'}
           ghost={muted}
-          icon={handRaised ? 'hand' : 'hand'}
+          icon={handRaised ? 'hand-paper' : 'hand-paper'}
           size="lg"
           circle
         />

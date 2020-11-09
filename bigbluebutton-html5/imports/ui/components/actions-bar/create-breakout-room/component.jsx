@@ -504,7 +504,7 @@ class BreakoutRoom extends PureComponent {
                   aria-label={
                     `${intl.formatMessage(intlMessages.minusRoomTime)} ${intl.formatMessage(intlMessages.roomTime, { 0: durationTime - 1 })}`
                   }
-                  icon="substract"
+                  icon="minus-circle"
                   onClick={() => {}}
                   hideLabel
                   circle
@@ -521,7 +521,7 @@ class BreakoutRoom extends PureComponent {
                   aria-label={
                     `${intl.formatMessage(intlMessages.addRoomTime)} ${intl.formatMessage(intlMessages.roomTime, { 0: durationTime + 1 })}`
                   }
-                  icon="add"
+                  icon="plus-circle"
                   onClick={() => {}}
                   hideLabel
                   circle

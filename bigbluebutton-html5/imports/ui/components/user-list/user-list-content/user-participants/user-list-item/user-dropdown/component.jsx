@@ -280,7 +280,7 @@ class UserDropdown extends PureComponent {
               isActionsOpen: true,
             }, Session.set('dropdownOpen', true),
           ),
-          'left_arrow',
+          'angle-left',
         ));
       }
 
@@ -525,7 +525,7 @@ class UserDropdown extends PureComponent {
       ? (<Icon iconName={normalizeEmojiName(user.emoji)} />)
       : user.name.toLowerCase().slice(0, 2);
 
-    const iconVoiceOnlyUser = (<Icon iconName="audio_on" />);
+    const iconVoiceOnlyUser = (<Icon iconName="phone-alt" />);
     const userIcon = isVoiceOnly ? iconVoiceOnlyUser : iconUser;
 
     return (

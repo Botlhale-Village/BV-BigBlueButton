@@ -41,7 +41,7 @@ const BreakoutRoomItem = ({
               className={styles.listItem}
               aria-label={intl.formatMessage(intlMessages.breakoutTitle)}
             >
-              <Icon iconName="rooms" />
+              <Icon iconName=" icon-bbb-rooms" />
               <span aria-hidden>{intl.formatMessage(intlMessages.breakoutTitle)}</span>
             </div>
           </div>

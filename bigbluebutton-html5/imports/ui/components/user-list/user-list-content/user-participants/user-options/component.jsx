@@ -233,7 +233,7 @@ class UserOptions extends PureComponent {
       (isMeteorConnected ? (
         <DropdownListItem
           key={this.clearStatusId}
-          icon="clear_status"
+          icon="user-times"
           label={intl.formatMessage(intlMessages.clearAllLabel)}
           description={intl.formatMessage(intlMessages.clearAllDesc)}
           onClick={toggleStatus}
@@ -242,7 +242,7 @@ class UserOptions extends PureComponent {
       (!meetingIsBreakout && isMeteorConnected ? (
         <DropdownListItem
           key={this.muteAllId}
-          icon={isMeetingMuted ? 'unmute' : 'mute'}
+          icon={isMeetingMuted ? 'microphone' : 'microphone-slash'}
           label={intl.formatMessage(intlMessages[isMeetingMuted ? 'unmuteAllLabel' : 'muteAllLabel'])}
           description={intl.formatMessage(intlMessages[isMeetingMuted ? 'unmuteAllDesc' : 'muteAllDesc'])}
           onClick={toggleMuteAllUsers}
@@ -251,7 +251,7 @@ class UserOptions extends PureComponent {
       (!meetingIsBreakout && !isMeetingMuted && isMeteorConnected ? (
         <DropdownListItem
           key={this.muteId}
-          icon="mute"
+          icon="microphone-slash"
           label={intl.formatMessage(intlMessages.muteAllExceptPresenterLabel)}
           description={intl.formatMessage(intlMessages.muteAllExceptPresenterDesc)}
           onClick={toggleMuteAllUsersExceptPresenter}
@@ -260,7 +260,7 @@ class UserOptions extends PureComponent {
       (amIModerator
         ? (
           <DropdownListItem
-            icon="download"
+            icon="file-download"
             label={intl.formatMessage(intlMessages.saveUserNames)}
             key={this.saveUsersNameId}
             onClick={this.onSaveUserNames}
@@ -280,7 +280,7 @@ class UserOptions extends PureComponent {
       (canCreateBreakout && isMeteorConnected ? (
         <DropdownListItem
           key={this.createBreakoutId}
-          icon="rooms"
+          icon=" icon-bbb-rooms"
           label={intl.formatMessage(intlMessages.createBreakoutRoom)}
           description={intl.formatMessage(intlMessages.createBreakoutRoomDesc)}
           onClick={this.onCreateBreakouts}
@@ -288,7 +288,7 @@ class UserOptions extends PureComponent {
       ),
       (canInviteUsers && isMeteorConnected ? (
         <DropdownListItem
-          icon="rooms"
+          icon="icon-bbb-rooms"
           label={intl.formatMessage(intlMessages.invitationItem)}
           key={this.createBreakoutId}
           onClick={this.onInvitationUsers}
@@ -297,7 +297,7 @@ class UserOptions extends PureComponent {
       (amIModerator && CaptionsService.isCaptionsEnabled() && isMeteorConnected
         ? (
           <DropdownListItem
-            icon="closed_caption"
+            icon="closed-captioning"
             label={intl.formatMessage(intlMessages.captionsLabel)}
             description={intl.formatMessage(intlMessages.captionsDesc)}
             key={this.captionsId}
@@ -326,7 +326,7 @@ class UserOptions extends PureComponent {
         <DropdownTrigger tabIndex={0}>
           <Button
             label={intl.formatMessage(intlMessages.optionsLabel)}
-            icon="settings"
+            icon="cog"
             ghost
             color="primary"
             hideLabel

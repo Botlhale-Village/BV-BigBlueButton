@@ -107,7 +107,7 @@ const QuickPollDropdown = (props) => {
           className={styles.button}
           color="primary"
           hideLabel
-          icon="polling"
+          icon="poll-h"
           label={intl.formatMessage(intlMessages.quickPollLabel)}
           onClick={() => null}
           size="lg"

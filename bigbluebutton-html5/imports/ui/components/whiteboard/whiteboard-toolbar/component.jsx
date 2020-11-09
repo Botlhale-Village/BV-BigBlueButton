@@ -74,13 +74,13 @@ class WhiteboardToolbar extends Component {
     const { annotations, multiUser, isPresenter } = this.props;
 
     let annotationSelected = {
-      icon: 'hand',
+      icon: 'hand-paper',
       value: 'hand',
     };
 
     if (multiUser && !isPresenter) {
       annotationSelected = {
-        icon: 'pen_tool',
+        icon: 'pen',
         value: 'pencil',
       };
     }
@@ -146,7 +146,7 @@ class WhiteboardToolbar extends Component {
     if (drawSettings) {
       if (multiUser && !isPresenter) {
         drawSettings.whiteboardAnnotationTool = 'pencil';
-        this.handleAnnotationChange({ icon: 'pen_tool', value: 'pencil' });
+        this.handleAnnotationChange({ icon: 'pen', value: 'pencil' });
       }
 
       this.setToolbarValues(drawSettings);
@@ -456,7 +456,7 @@ class WhiteboardToolbar extends Component {
     return panMode
       ? (
         <ToolbarMenuItem
-          icon="hand"
+          icon="hand-paper"
           label={intl.formatMessage(intlMessages.toolbarItemPan)}
           onItemClick={() => { }}
           className={styles.toolbarButton}
@@ -750,7 +750,7 @@ class WhiteboardToolbar extends Component {
       <ToolbarMenuItem
         disabled={!isMeteorConnected}
         label={intl.formatMessage(intlMessages.toolbarClearAnnotations)}
-        icon="delete"
+        icon="trash"
         onItemClick={this.handleClearAll}
         className={styles.toolbarButton}
       />
@@ -767,7 +767,7 @@ class WhiteboardToolbar extends Component {
           ? intl.formatMessage(intlMessages.toolbarMultiUserOff)
           : intl.formatMessage(intlMessages.toolbarMultiUserOn)
         }
-        icon={multiUser ? 'multi_whiteboard' : 'whiteboard'}
+        icon={multiUser ? ' icon-bbb-multi_whiteboard' : 'chalkboard'}
         onItemClick={this.handleSwitchWhiteboardMode}
         className={styles.toolbarButton}
       />

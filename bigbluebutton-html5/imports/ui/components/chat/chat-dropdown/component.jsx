@@ -75,8 +75,8 @@ class ChatDropdown extends PureComponent {
       intl, isMeteorConnected, amIModerator, meetingIsBreakout,
     } = this.props;
 
-    const clearIcon = 'delete';
-    const saveIcon = 'download';
+    const clearIcon = 'trash';
+    const saveIcon = 'file-download';
     const copyIcon = 'copy';
 
     return _.compact([
@@ -132,7 +132,7 @@ class ChatDropdown extends PureComponent {
         <DropdownTrigger tabIndex={0}>
           <Button
             data-test="chatDropdownTrigger"
-            icon="more"
+            icon="ellipsis-v"
             size="sm"
             ghost
             circle

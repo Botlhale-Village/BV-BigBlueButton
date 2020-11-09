@@ -268,7 +268,7 @@ const getActiveChats = (chatID) => {
   activeChats.push({
     userId: 'public',
     name: 'Public Chat',
-    icon: 'group_chat',
+    icon: 'comments',
     unreadCounter: UnreadMessages.count(PUBLIC_GROUP_CHAT_ID),
   });
 

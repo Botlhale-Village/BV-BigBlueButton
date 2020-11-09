@@ -124,7 +124,7 @@ class ActionsDropdown extends PureComponent {
       (amIPresenter && isPollingEnabled
         ? (
           <DropdownListItem
-            icon="polling"
+            icon="poll-h"
             label={formatMessage(pollBtnLabel)}
             description={formatMessage(pollBtnDesc)}
             key={this.pollId}
@@ -141,7 +141,7 @@ class ActionsDropdown extends PureComponent {
       (!amIPresenter
         ? (
           <DropdownListItem
-            icon="presentation"
+            icon="desktop"
             label={formatMessage(takePresenter)}
             description={formatMessage(takePresenterDesc)}
             key={this.takePresenterId}
@@ -153,7 +153,7 @@ class ActionsDropdown extends PureComponent {
         ? (
           <DropdownListItem
             data-test="uploadPresentation"
-            icon="presentation"
+            icon="desktop"
             label={formatMessage(presentationLabel)}
             description={formatMessage(presentationDesc)}
             key={this.presentationItemId}

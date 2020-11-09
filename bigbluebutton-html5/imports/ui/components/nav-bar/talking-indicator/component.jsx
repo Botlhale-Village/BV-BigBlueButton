@@ -52,8 +52,8 @@ class TalkingIndicator extends PureComponent {
         0: callerName,
       });
 
-      let icon = talking ? 'unmute' : 'blank';
-      icon = muted ? 'mute' : icon;
+      let icon = talking ? 'microphone' : 'blank';
+      icon = muted ? 'microphone-slash' : icon;
 
       return (
         <Button

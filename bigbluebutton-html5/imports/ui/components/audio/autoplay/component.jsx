@@ -33,7 +33,7 @@ class AudioAutoplayPrompt extends PureComponent {
           className={styles.button}
           label={intl.formatMessage(intlMessages.confirmLabel)}
           aria-label={intl.formatMessage(intlMessages.confirmAriaLabel)}
-          icon="thumbs_up"
+          icon="thumbs-up"
           circle
           color="success"
           size="jumbo"

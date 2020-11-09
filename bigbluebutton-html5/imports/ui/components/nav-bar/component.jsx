@@ -93,7 +93,7 @@ class NavBar extends PureComponent {
         <div className={styles.top}>
           <div className={styles.left}>
             {!isExpanded ? null
-              : <Icon iconName="left_arrow" className={styles.arrowLeft} />
+              : <Icon iconName="angle-left" className={styles.arrowLeft} />
             }
             <Button
               data-test="userListToggleButton"
@@ -109,7 +109,7 @@ class NavBar extends PureComponent {
               accessKey={TOGGLE_USERLIST_AK}
             />
             {isExpanded ? null
-              : <Icon iconName="right_arrow" className={styles.arrowRight} />
+              : <Icon iconName="angle-right" className={styles.arrowRight} />
             }
           </div>
           <div className={styles.center}>

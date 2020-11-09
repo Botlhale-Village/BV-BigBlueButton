@@ -169,12 +169,12 @@ class SettingsDropdown extends PureComponent {
 
     let fullscreenLabel = intl.formatMessage(intlMessages.fullscreenLabel);
     let fullscreenDesc = intl.formatMessage(intlMessages.fullscreenDesc);
-    let fullscreenIcon = 'fullscreen';
+    let fullscreenIcon = 'expand-arrows-alt';
 
     if (isFullscreen) {
       fullscreenLabel = intl.formatMessage(intlMessages.exitFullscreenLabel);
       fullscreenDesc = intl.formatMessage(intlMessages.exitFullscreenDesc);
-      fullscreenIcon = 'exit_fullscreen';
+      fullscreenIcon = 'compress-arrows-alt';
     }
 
     return (
@@ -212,7 +212,7 @@ class SettingsDropdown extends PureComponent {
     const logoutOption = (
       <DropdownListItem
         key="list-item-logout"
-        icon="logout"
+        icon="sign-out-alt"
         label={intl.formatMessage(intlMessages.leaveSessionLabel)}
         description={intl.formatMessage(intlMessages.leaveSessionDesc)}
         onClick={() => this.leaveSession()}
@@ -227,14 +227,14 @@ class SettingsDropdown extends PureComponent {
       this.getFullscreenItem(),
       (<DropdownListItem
         key="list-item-settings"
-        icon="settings"
+        icon="cog"
         label={intl.formatMessage(intlMessages.settingsLabel)}
         description={intl.formatMessage(intlMessages.settingsDesc)}
         onClick={() => mountModal(<SettingsMenuContainer />)}
       />),
       (<DropdownListItem
         key="list-item-about"
-        icon="about"
+        icon="info-circle"
         label={intl.formatMessage(intlMessages.aboutLabel)}
         description={intl.formatMessage(intlMessages.aboutDesc)}
         onClick={() => mountModal(<AboutContainer />)}
@@ -243,7 +243,7 @@ class SettingsDropdown extends PureComponent {
         : (
           <DropdownListItem
             key="list-item-help"
-            icon="help"
+            icon="question-circle"
             iconRight="popout_window"
             label={intl.formatMessage(intlMessages.helpLabel)}
             description={intl.formatMessage(intlMessages.helpDesc)}
@@ -252,7 +252,7 @@ class SettingsDropdown extends PureComponent {
         ),
       (<DropdownListItem
         key="list-item-shortcuts"
-        icon="shortcuts"
+        icon="keyboard"
         label={intl.formatMessage(intlMessages.hotkeysLabel)}
         description={intl.formatMessage(intlMessages.hotkeysDesc)}
         onClick={() => mountModal(<ShortcutHelpComponent />)}
@@ -261,7 +261,7 @@ class SettingsDropdown extends PureComponent {
       allowedToEndMeeting && isMeteorConnected
         ? (<DropdownListItem
           key="list-item-end-meeting"
-          icon="application"
+          icon="window-maximize"
           label={intl.formatMessage(intlMessages.endMeetingLabel)}
           description={intl.formatMessage(intlMessages.endMeetingDesc)}
           onClick={() => mountModal(<EndMeetingConfirmationContainer />)}
@@ -290,7 +290,7 @@ class SettingsDropdown extends PureComponent {
         <DropdownTrigger tabIndex={0} accessKey={OPEN_OPTIONS_AK}>
           <Button
             label={intl.formatMessage(intlMessages.optionsLabel)}
-            icon="more"
+            icon="ellipsis-v"
             ghost
             circle
             hideLabel

@@ -338,7 +338,7 @@ class Poll extends Component {
             ref={(node) => { this.hideBtn = node; }}
             tabIndex={0}
             label={intl.formatMessage(intlMessages.pollPaneTitle)}
-            icon="left_arrow"
+            icon="angle-left"
             aria-label={intl.formatMessage(intlMessages.hidePollDesc)}
             className={styles.hideBtn}
             onClick={() => {
@@ -357,7 +357,7 @@ class Poll extends Component {
               Session.set('forcePollOpen', false);
             }}
             className={styles.closeBtn}
-            icon="close"
+            icon="times"
             size="sm"
             hideLabel
           />

@@ -242,7 +242,7 @@ class PresentationToolbar extends PureComponent {
               aria-describedby={startOfSlides ? 'noPrevSlideDesc' : 'prevSlideDesc'}
               disabled={startOfSlides || !isMeteorConnected}
               color="default"
-              icon="left_arrow"
+              icon="angle-left"
               size="md"
               onClick={this.previousSlideHandler}
               label={intl.formatMessage(intlMessages.previousSlideLabel)}
@@ -276,7 +276,7 @@ class PresentationToolbar extends PureComponent {
               aria-describedby={endOfSlides ? 'noNextSlideDesc' : 'nextSlideDesc'}
               disabled={endOfSlides || !isMeteorConnected}
               color="default"
-              icon="right_arrow"
+              icon="angle-right"
               size="md"
               onClick={this.nextSlideHandler}
               label={intl.formatMessage(intlMessages.nextSlideLabel)}
@@ -312,7 +312,7 @@ class PresentationToolbar extends PureComponent {
               }
               color="default"
               disabled={!isMeteorConnected}
-              icon="fit_to_width"
+              icon="arrows-alt-h"
               size="md"
               circle={false}
               onClick={fitToWidthHandler}

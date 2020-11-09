@@ -83,6 +83,7 @@ class MessageForm extends PureComponent {
 
     this.handleMessageChange = this.handleMessageChange.bind(this);
     this.handleMessageKeyDown = this.handleMessageKeyDown.bind(this);
+    this.handleEmojiClick = this.handleEmojiClick.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.setMessageHint = this.setMessageHint.bind(this);
   }
@@ -177,6 +178,10 @@ class MessageForm extends PureComponent {
       { chatId },
       { $set: { message } },
     );
+  }
+
+  handleEmojiClick(emoji) {
+    this.setState({ message: this.state.message + emoji });
   }
 
   handleMessageKeyDown(e) {
@@ -303,11 +308,53 @@ class MessageForm extends PureComponent {
             disabled={disabled}
             label={intl.formatMessage(messages.submitLabel)}
             color="primary"
-            icon="send"
+            icon="paper-plane"
             onClick={() => {}}
             data-test="sendMessageButton"
           />
         </div>
+        <div className={styles.wrapper, styles.topMargin}>
+          <Button
+            circle
+            hideLabel
+            size="lg"
+            className={styles.sendButton}
+            aria-label="Smile"
+            type="submit"
+            disabled={disabled}
+            label="Smile"
+            customIcon="😄"
+            color="default"
+            onClick={() => this.handleEmojiClick('😄')}
+          />
+          <Button
+            circle
+            hideLabel
+            size="lg"
+            className={styles.sendButton}
+            aria-label="Sob"
+            type="submit"
+            disabled={disabled}
+            label="Sob"
+            customIcon="😭"
+            color="default"
+            onClick={() => this.handleEmojiClick('😭')}
+          />
+          <Button
+            circle
+            hideLabel
+            size="lg"
+            className={styles.sendButton}
+            aria-label="Thumbs Up"
+            type="submit"
+            disabled={disabled}
+            label="Thumbs Up"
+            customIcon="👍"
+            color="default"
+            onClick={() => this.handleEmojiClick('👍')}
+          />
+        </div>
+
         <TypingIndicatorContainer {...{ error }} />
       </form>
     ) : null;

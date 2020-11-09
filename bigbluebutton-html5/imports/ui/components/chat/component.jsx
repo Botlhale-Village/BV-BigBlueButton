@@ -65,7 +65,7 @@ const Chat = (props) => {
             aria-label={intl.formatMessage(intlMessages.hideChatLabel, { 0: title })}
             accessKey={HIDE_CHAT_AK}
             label={title}
-            icon="left_arrow"
+            icon="angle-left"
             className={styles.hideBtn}
           />
         </div>
@@ -73,7 +73,7 @@ const Chat = (props) => {
           chatID !== 'public'
             ? (
               <Button
-                icon="close"
+                icon="times"
                 size="sm"
                 ghost
                 color="dark"

@@ -260,7 +260,7 @@ class AudioModal extends Component {
     });
 
     return joinEchoTest().then(() => {
-      //console.log(inputDeviceId, outputDeviceId);
+      // console.log(inputDeviceId, outputDeviceId);
       this.setState({
         content: 'echoTest',
         disableActions: false,
@@ -389,7 +389,7 @@ class AudioModal extends Component {
               <Button
                 className={styles.audioBtn}
                 label={intl.formatMessage(intlMessages.microphoneLabel)}
-                icon="unmute"
+                icon="microphone"
                 circle
                 size="jumbo"
                 disabled={audioLocked}
@@ -402,7 +402,7 @@ class AudioModal extends Component {
               <Button
                 className={styles.audioBtn}
                 label={intl.formatMessage(intlMessages.listenOnlyLabel)}
-                icon="listen"
+                icon="headphones"
                 circle
                 size="jumbo"
                 onClick={this.handleJoinListenOnly}

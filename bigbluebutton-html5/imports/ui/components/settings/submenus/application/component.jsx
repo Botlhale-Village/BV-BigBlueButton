@@ -344,7 +344,7 @@ class ApplicationMenu extends BaseMenu {
                     <Button
                       onClick={() => this.handleDecreaseFontSize()}
                       color="primary"
-                      icon="substract"
+                      icon="minus-circle"
                       circle
                       hideLabel
                       label={intl.formatMessage(intlMessages.decreaseFontBtnLabel)}
@@ -356,7 +356,7 @@ class ApplicationMenu extends BaseMenu {
                     <Button
                       onClick={() => this.handleIncreaseFontSize()}
                       color="primary"
-                      icon="add"
+                      icon="plus-circle"
                       circle
                       hideLabel
                       label={intl.formatMessage(intlMessages.increaseFontBtnLabel)}

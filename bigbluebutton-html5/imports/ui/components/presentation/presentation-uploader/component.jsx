@@ -598,7 +598,7 @@ class PresentationUploader extends Component {
               aria-label={formattedDownloadableAriaLabel}
               hideLabel
               size="sm"
-              icon={item.isDownloadable ? 'download' : 'download-off'}
+              icon={item.isDownloadable ? 'download' : ' icon-bbb-download-off'}
               onClick={() => this.toggleDownloadable(item)}
             />
             <Checkbox
@@ -616,7 +616,7 @@ class PresentationUploader extends Component {
                 label={intl.formatMessage(intlMessages.removePresentation)}
                 aria-label={`${intl.formatMessage(intlMessages.removePresentation)} ${item.filename}`}
                 size="sm"
-                icon="delete"
+                icon="trash"
                 hideLabel
                 onClick={() => this.handleRemove(item)}
               />
@@ -650,7 +650,7 @@ class PresentationUploader extends Component {
         disablePreview
         onDrop={this.handleFiledrop}
       >
-        <Icon className={styles.dropzoneIcon} iconName="upload" />
+        <Icon className={styles.dropzoneIcon} iconName="cloud-upload-alt" />
         <p className={styles.dropzoneMessage}>
           {intl.formatMessage(intlMessages.dropzoneImagesLabel)}
           &nbsp;
@@ -688,7 +688,7 @@ class PresentationUploader extends Component {
         disablepreview="true"
         onDrop={this.handleFiledrop}
       >
-        <Icon className={styles.dropzoneIcon} iconName="upload" />
+        <Icon className={styles.dropzoneIcon} iconName="cloud-upload-alt" />
         <p className={styles.dropzoneMessage}>
           {intl.formatMessage(intlMessages.dropzoneLabel)}
           &nbsp;

@@ -225,7 +225,7 @@ class VideoList extends Component {
         role="button"
         aria-label={nextPageLabel}
         color="primary"
-        icon="right_arrow"
+        icon="angle-right"
         size="md"
         onClick={VideoService.getNextVideoPage}
         label={nextPageDetailedLabel}
@@ -249,7 +249,7 @@ class VideoList extends Component {
         role="button"
         aria-label={prevPageLabel}
         color="primary"
-        icon="left_arrow"
+        icon="angle-left"
         size="md"
         onClick={VideoService.getPreviousVideoPage}
         label={prevPageDetailedLabel}

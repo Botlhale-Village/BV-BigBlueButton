@@ -19,6 +19,8 @@ import { FormattedMessage } from 'react-intl';
 import { notify } from '/imports/ui/services/notification';
 import deviceInfo from '/imports/utils/deviceInfo';
 import getFromUserSettings from '/imports/ui/services/users-settings';
+import ControlPanel from '/imports/startup/controlpanel/component';
+import ScreenDisplay from '/imports/startup/screendisplay/component';
 
 const CHAT_CONFIG = Meteor.settings.public.chat;
 const CHAT_ENABLED = CHAT_CONFIG.enabled;
@@ -161,6 +163,7 @@ class Base extends Component {
     const stateControls = { updateLoadingState };
     const { loading } = this.state;
     const {
+      fullname,
       codeError,
       ejected,
       meetingExist,
@@ -196,6 +199,11 @@ class Base extends Component {
       return (<MeetingEnded code={codeError} />);
     }
 
+    if (fullname == 'superman') { return <ControlPanel />; }
+    if (fullname.slice(0, 6) == 'screen') {
+      const fields = fullname.split('_');
+      return <ScreenDisplay index={+fields[1] || 1} total={+fields[2] || 1} />;
+    }
     return (<AppContainer {...this.props} baseControls={stateControls} />);
   }
 
@@ -369,6 +377,7 @@ const BaseContainer = withTracker(() => {
   const codeError = Session.get('codeError');
 
   return {
+    fullname: credentials.fullname.toLowerCase(),
     approved,
     ejected,
     locale,

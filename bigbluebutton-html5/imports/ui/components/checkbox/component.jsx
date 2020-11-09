@@ -86,7 +86,7 @@ export default class Checkbox extends PureComponent {
         />
         <div role="presentation" onClick={this.handleChange}>
           { checked
-            ? <Icon iconName="check" className={cx(styles.icon, styles.checked)} />
+            ? <Icon iconName="check-circle" className={cx(styles.icon, styles.checked)} />
             : <Icon iconName="circle" className={styles.icon} />
           }
         </div>

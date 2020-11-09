@@ -67,7 +67,7 @@ const FullscreenButtonComponent = ({
     <div className={wrapperClassName}>
       <Button
         color="default"
-        icon={!isFullscreen ? 'fullscreen' : 'exit_fullscreen'}
+        icon={!isFullscreen ? 'expand-arrows-alt' : 'compress-arrows-alt'}
         size="sm"
         onClick={() => handleToggleFullScreen(fullscreenRef)}
         label={formattedLabel}

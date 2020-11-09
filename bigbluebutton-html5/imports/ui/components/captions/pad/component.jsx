@@ -196,7 +196,7 @@ class Pad extends PureComponent {
               onClick={() => { Session.set('openPanel', 'userlist'); }}
               aria-label={intl.formatMessage(intlMessages.hide)}
               label={name}
-              icon="left_arrow"
+              icon="angle-left"
               className={styles.hideBtn}
             />
           </div>

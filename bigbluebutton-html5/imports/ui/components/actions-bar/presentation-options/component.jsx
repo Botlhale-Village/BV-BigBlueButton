@@ -28,7 +28,7 @@ const PresentationOptionsContainer = ({ intl, toggleSwapLayout, isThereCurrentPr
   return (
     <Button
       className={styles.button}
-      icon="presentation"
+      icon="desktop"
       label={intl.formatMessage(intlMessages.restorePresentationLabel)}
       description={intl.formatMessage(intlMessages.restorePresentationDesc)}
       color="primary"

@@ -222,8 +222,8 @@ class BreakoutRoom extends PureComponent {
                 <Button
                   label={
                       stateBreakoutId === breakoutId && joinedAudioOnly
-                      ? intl.formatMessage(intlMessages.breakoutReturnAudio)
-                      : intl.formatMessage(intlMessages.breakoutJoinAudio)
+                        ? intl.formatMessage(intlMessages.breakoutReturnAudio)
+                        : intl.formatMessage(intlMessages.breakoutJoinAudio)
                   }
                   className={styles.button}
                   disabled={stateBreakoutId !== breakoutId && joinedAudioOnly}
@@ -314,7 +314,7 @@ class BreakoutRoom extends PureComponent {
     return (
       <div className={styles.panel}>
         <Button
-          icon="left_arrow"
+          icon="angle-left"
           label={intl.formatMessage(intlMessages.breakoutTitle)}
           aria-label={intl.formatMessage(intlMessages.breakoutAriaTitle)}
           className={styles.header}

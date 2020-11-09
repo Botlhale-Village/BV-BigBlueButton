@@ -9,8 +9,8 @@ const propTypes = {
 };
 
 const defaultProps = {
-  // prependIconName: 'la la-',
-  prependIconName: 'icon-bbb-',
+  prependIconName: 'la la-',
+  // prependIconName: 'icon-bbb-',
 };
 
 const Icon = ({

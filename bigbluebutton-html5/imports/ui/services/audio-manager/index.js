@@ -532,8 +532,8 @@ class AudioManager {
       + '/resources/sounds/LeftCall.mp3');
   }
 
-  notify(message, error = false, icon = 'unmute') {
-    const audioIcon = this.isListenOnly ? 'listen' : icon;
+  notify(message, error = false, icon = 'microphone') {
+    const audioIcon = this.isListenOnly ? 'headphones' : icon;
 
     notify(
       message,
@@ -588,7 +588,7 @@ class AudioManager {
     }
   }
 
-  setSenderTrackEnabled (shouldEnable) {
+  setSenderTrackEnabled(shouldEnable) {
     // If the bridge is set to listen only mode, nothing to do here. This method
     // is solely for muting outbound tracks.
     if (this.isListenOnly) return;
@@ -600,7 +600,7 @@ class AudioManager {
       return;
     }
 
-    peer.getSenders().forEach(sender => {
+    peer.getSenders().forEach((sender) => {
       const { track } = sender;
       if (track && track.kind === 'audio') {
         track.enabled = shouldEnable;
@@ -608,15 +608,15 @@ class AudioManager {
     });
   }
 
-  mute () {
+  mute() {
     this.setSenderTrackEnabled(false);
   }
 
-  unmute () {
+  unmute() {
     this.setSenderTrackEnabled(true);
   }
 
-  playAlertSound (url) {
+  playAlertSound(url) {
     if (!url) {
       return Promise.resolve();
     }

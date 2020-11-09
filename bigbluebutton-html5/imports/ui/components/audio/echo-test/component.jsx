@@ -61,7 +61,7 @@ class EchoTest extends Component {
           className={styles.button}
           label={intl.formatMessage(intlMessages.confirmLabel)}
           aria-label={intl.formatMessage(intlMessages.confirmAriaLabel)}
-          icon="thumbs_up"
+          icon="thumbs-up"
           disabled={this.state.disabled}
           circle
           color="success"
@@ -72,7 +72,7 @@ class EchoTest extends Component {
           className={styles.button}
           label={intl.formatMessage(intlMessages.disconfirmLabel)}
           aria-label={intl.formatMessage(intlMessages.disconfirmAriaLabel)}
-          icon="thumbs_down"
+          icon="thumbs-down"
           circle
           color="danger"
           size="jumbo"

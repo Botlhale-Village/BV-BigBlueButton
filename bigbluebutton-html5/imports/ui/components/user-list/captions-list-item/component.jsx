@@ -53,7 +53,7 @@ const CaptionsListItem = (props) => {
       onClick={() => handleClickToggleCaptions(locale.locale)}
       aria-label={`${locale.name} ${intl.formatMessage(intlMessages.captionLabel)}`}
     >
-      <Icon iconName="closed_caption" />
+      <Icon iconName="closed-captioning" />
       <span aria-hidden>{locale.name}</span>
     </div>
   );
