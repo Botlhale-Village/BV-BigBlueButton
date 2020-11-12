@@ -14,6 +14,8 @@ import getFromUserSettings from '/imports/ui/services/users-settings';
 import logger from '/imports/startup/client/logger';
 import _ from 'lodash';
 
+import HybeFlexService, { HybeFlexAppMode } from '/imports/utils/hybeflex';
+
 const CAMERA_PROFILES = Meteor.settings.public.kurento.cameraProfiles;
 const MULTIPLE_CAMERAS = Meteor.settings.public.app.enableMultipleCameras;
 const SKIP_VIDEO_PREVIEW = Meteor.settings.public.kurento.skipVideoPreview;
@@ -293,14 +295,14 @@ class VideoService {
   }
 
   getVideoStreams() {
-    let streams = VideoStreams.find(
+    let streams = HybeFlexService.filterStreams(VideoStreams.find(
       { meetingId: Auth.meetingID },
       {
         fields: {
           userId: 1, stream: 1, name: 1,
         },
       },
-    ).fetch();
+    ).fetch());
 
     const moderatorOnly = this.webcamsOnlyForModerator();
     if (moderatorOnly) streams = this.filterModeratorOnly(streams);
@@ -313,6 +315,13 @@ class VideoService {
       userId: vs.userId,
       name: vs.name,
     }));
+
+    if (HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
+      return {
+        streams: mappedStreams.sort(HybeFlexService.sortVideoScreenStreams),
+        totalNumberOfStreams: mappedStreams.length
+      };
+    }
 
     const pageSize = this.getMyPageSize();
 
@@ -402,6 +411,8 @@ class VideoService {
   }
 
   filterModeratorOnly(streams) {
+    if (HybeFlexService.getWebcamsOnlyForModeratorOverride()) { return streams; }
+
     const amIViewer = this.getMyRole() === ROLE_VIEWER;
 
     if (amIViewer) {
@@ -435,6 +446,7 @@ class VideoService {
   }
 
   webcamsOnlyForModerator() {
+    if (HybeFlexService.getWebcamsOnlyForModeratorOverride()) { return false; }
     const m = Meetings.findOne({ meetingId: Auth.meetingID },
       { fields: { 'usersProp.webcamsOnlyForModerator': 1 } });
     return m.usersProp ? m.usersProp.webcamsOnlyForModerator : false;
@@ -580,6 +592,7 @@ class VideoService {
     // Mobile shouldn't be able to share more than one camera at the same time
     // Safari needs to implement devicechange event for safe device control
     return MULTIPLE_CAMERAS
+      && HybeFlexService.isMultipleCamerasEnabled()
       && !this.getSkipVideoPreview()
       && !this.isMobile
       && !this.isSafari

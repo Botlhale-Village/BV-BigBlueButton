@@ -167,7 +167,7 @@ class BreakoutJoinConfirmation extends Component {
           callback: this.handleJoinBreakoutConfirmation,
           label: intl.formatMessage(intlMessages.confirmLabel),
           description: intl.formatMessage(intlMessages.confirmDesc),
-          icon: 'popout_window',
+          icon: 'external-link-alt',
         }}
         dismiss={{
           label: intl.formatMessage(intlMessages.dismissLabel),

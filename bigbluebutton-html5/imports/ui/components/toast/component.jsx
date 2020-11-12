@@ -16,11 +16,11 @@ const defaultProps = {
 };
 
 const defaultIcons = {
-  [toast.TYPE.INFO]: 'help',
-  [toast.TYPE.SUCCESS]: 'checkmark',
-  [toast.TYPE.WARNING]: 'warning',
-  [toast.TYPE.ERROR]: 'close',
-  [toast.TYPE.DEFAULT]: 'about',
+  [toast.TYPE.INFO]: 'question-circle',
+  [toast.TYPE.SUCCESS]: 'check',
+  [toast.TYPE.WARNING]: 'exclamation-circle',
+  [toast.TYPE.ERROR]: 'times',
+  [toast.TYPE.DEFAULT]: 'info-circle',
 };
 
 const Toast = ({

@@ -5,6 +5,7 @@ import Meetings from '/imports/api/meetings';
 import { makeCall } from '/imports/ui/services/api';
 import VoiceUsers from '/imports/api/voice-users';
 import logger from '/imports/startup/client/logger';
+import Service from '/imports/ui/components/user-list/service';
 
 const ROLE_MODERATOR = Meteor.settings.public.user.role_moderator;
 
@@ -32,6 +33,17 @@ const init = (messages, intl) => {
   };
 
   AudioManager.init(userData);
+};
+
+
+const toggleRaiseHand = () => {
+  const userEmoji = Users.findOne({ userId: Auth.userID }, { fields: { emoji: 1 } }).emoji;
+  if (userEmoji == "raiseHand") {
+    makeCall('setEmojiStatus', Auth.userID, 'none');
+  }
+  else {
+    Service.setEmojiStatus(Auth.userID, 'raiseHand');
+  }
 };
 
 const isVoiceUser = () => {
@@ -68,6 +80,7 @@ export default {
   joinMicrophone: () => AudioManager.joinMicrophone(),
   joinEchoTest: () => AudioManager.joinEchoTest(),
   toggleMuteMicrophone,
+  toggleRaiseHand,
   changeInputDevice: inputDeviceId => AudioManager.changeInputDevice(inputDeviceId),
   changeOutputDevice: outputDeviceId => AudioManager.changeOutputDevice(outputDeviceId),
   isConnected: () => AudioManager.isConnected,

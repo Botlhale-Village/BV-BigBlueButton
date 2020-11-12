@@ -319,26 +319,39 @@ class MessageForm extends PureComponent {
             hideLabel
             size="lg"
             className={styles.sendButton}
-            aria-label="Smile"
+            aria-label="Happy"
             type="submit"
             disabled={disabled}
-            label="Smile"
-            customIcon="😄"
+            label="Happy"
+            customIcon="🙂"
             color="default"
-            onClick={() => this.handleEmojiClick('😄')}
+            onClick={() => this.handleEmojiClick('🙂')}
           />
           <Button
             circle
             hideLabel
             size="lg"
             className={styles.sendButton}
-            aria-label="Sob"
+            aria-label="Sad"
             type="submit"
             disabled={disabled}
-            label="Sob"
-            customIcon="😭"
+            label="Sad"
+            customIcon="🙁"
             color="default"
-            onClick={() => this.handleEmojiClick('😭')}
+            onClick={() => this.handleEmojiClick('🙁')}
+          />
+            <Button
+            circle
+            hideLabel
+            size="lg"
+            className={styles.sendButton}
+            aria-label="Neutral"
+            type="submit"
+            disabled={disabled}
+            label="Neutral"
+            customIcon="😐"
+            color="default"
+            onClick={() => this.handleEmojiClick('😐')}
           />
           <Button
             circle
@@ -352,6 +365,19 @@ class MessageForm extends PureComponent {
             customIcon="👍"
             color="default"
             onClick={() => this.handleEmojiClick('👍')}
+          />
+           <Button
+            circle
+            hideLabel
+            size="lg"
+            className={styles.sendButton}
+            aria-label="Thumbs Down"
+            type="submit"
+            disabled={disabled}
+            label="Thumbs Down"
+            customIcon="👎"
+            color="default"
+            onClick={() => this.handleEmojiClick('👎')}
           />
         </div>
 

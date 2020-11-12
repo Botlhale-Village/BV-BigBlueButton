@@ -106,7 +106,7 @@ export default injectNotify(injectIntl(withTracker(({
     if (timeRemaining > 0) {
       const time = getTimeRemaining();
       if (time === (alertUnderMinutes * 60) && alertMessage) {
-        notify(alertMessage, 'info', 'rooms');
+        notify(alertMessage, 'info', ' icon-bbb-rooms');
       }
       data.message = intl.formatMessage(messageDuration, { 0: humanizeSeconds(time) });
     } else {

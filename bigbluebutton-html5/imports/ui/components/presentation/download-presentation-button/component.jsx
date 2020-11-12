@@ -28,7 +28,7 @@ const DownloadPresentationButton = ({
   <div className={cx(styles.wrapper, dark ? styles.dark : styles.light)}>
     <Button
       color="default"
-      icon="download"
+      icon="file-download"
       size="sm"
       onClick={handleDownloadPresentation}
       label={intl.formatMessage(intlMessages.downloadPresentationButton)}

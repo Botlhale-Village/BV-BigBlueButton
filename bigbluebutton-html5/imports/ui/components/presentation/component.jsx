@@ -117,7 +117,7 @@ class PresentationArea extends PureComponent {
       notify(
         `${intl.formatMessage(intlMessages.changeNotification)} ${currentPresentation.name}`,
         'info',
-        'presentation',
+        'desktop',
       );
     }
 

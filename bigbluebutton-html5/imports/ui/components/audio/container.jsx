@@ -120,7 +120,7 @@ export default lockContextContainer(withModalMounter(injectIntl(withTracker(({ m
     && !Service.isListenOnly()
     && !Service.isMuted()) {
     Service.toggleMuteMicrophone();
-    notify(intl.formatMessage(intlMessages.reconectingAsListener), 'info', 'audio_on');
+    notify(intl.formatMessage(intlMessages.reconectingAsListener), 'info', 'phone-alt');
   }
 
   Breakouts.find().observeChanges({

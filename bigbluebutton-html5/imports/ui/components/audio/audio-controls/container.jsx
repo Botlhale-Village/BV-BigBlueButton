@@ -51,6 +51,7 @@ const {
   isHangingUp,
   isTalking,
   toggleMuteMicrophone,
+  toggleRaiseHand,
   joinListenOnly,
 } = Service;
 
@@ -64,6 +65,7 @@ export default lockContextContainer(withModalMounter(withTracker(({ mountModal, 
   talking: isTalking() && !isMuted(),
   isVoiceUser: isVoiceUser(),
   handleToggleMuteMicrophone: () => toggleMuteMicrophone(),
+  handleToggleRaiseHand: () => toggleRaiseHand(),
   handleJoinAudio: () => (isConnected() ? joinListenOnly() : mountModal(<AudioModalContainer />)),
   handleLeaveAudio,
 }))(AudioControlsContainer)));

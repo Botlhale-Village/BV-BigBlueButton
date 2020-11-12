@@ -31,6 +31,7 @@ const propTypes = {
   handleToggleMuteMicrophone: PropTypes.func.isRequired,
   handleJoinAudio: PropTypes.func.isRequired,
   handleLeaveAudio: PropTypes.func.isRequired,
+  handleToggleRaiseHand: PropTypes.func.isRequired,
   disable: PropTypes.bool.isRequired,
   muted: PropTypes.bool.isRequired,
   handRaised: PropTypes.bool.isRequired,
@@ -55,6 +56,7 @@ class AudioControls extends PureComponent {
       handleToggleMuteMicrophone,
       handleJoinAudio,
       handleLeaveAudio,
+      handleToggleRaiseHand,
       showMute,
       muted,
       handRaised,
@@ -116,7 +118,7 @@ class AudioControls extends PureComponent {
         />
         <Button
           className={cx(inAudio || styles.btn)}
-        // onClick={}
+          onClick={handleToggleRaiseHand}
           disabled={disable}
           hideLabel
           label={handRaised ? 'Lower Hand' : 'Raise Hand'}

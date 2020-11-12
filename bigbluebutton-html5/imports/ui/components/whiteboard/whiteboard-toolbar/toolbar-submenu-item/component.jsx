@@ -66,7 +66,7 @@ export default class ToolbarSubmenuItem extends Component {
           size="md"
           label={label}
           aria-label={label}
-          icon={icon}
+          icon={this.getIcon(icon)}
           customIcon={customIcon}
           onMouseUp={this.handleOnMouseUp}
           onKeyPress={this.handleOnMouseUp}
@@ -75,6 +75,29 @@ export default class ToolbarSubmenuItem extends Component {
         />
       </div>
     );
+  }
+
+  getIcon(icon){
+    switch(icon)
+    {
+      case "text_tool":
+        return " icon-bbb-text_tool";
+      case "line_tool":
+        return " icon-bbb-line_tool";
+      case "circle_tool":
+        return " icon-bbb-circle_tool";
+      case "triangle_tool":
+        return " icon-bbb-triangle_tool";
+      case "rectangle_tool":
+        return " icon-bbb-rectangle_tool";
+      case "pen_tool":
+        return "pen";
+      case "hand":
+        return "hand-paper";
+        default:
+          return icon;
+
+    }
   }
 }
 

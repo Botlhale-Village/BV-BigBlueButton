@@ -1,14 +1,14 @@
 export const EMOJI_STATUSES = {
   // name: icon
-  away: 'time',
-  raiseHand: 'hand',
-  neutral: 'undecided',
-  confused: 'confused',
-  sad: 'sad',
-  happy: 'happy',
-  applause: 'applause',
-  thumbsUp: 'thumbs_up',
-  thumbsDown: 'thumbs_down',
+  away: 'clock',
+  raiseHand: 'hand-paper',
+  neutral: 'meh',
+  confused: 'dizzy',
+  sad: 'frown',
+  happy: 'smile',
+  applause: 'sign-language',
+  thumbsUp: 'thumbs-up',
+  thumbsDown: 'thumbs-down',
 };
 
 export default { EMOJI_STATUSES };

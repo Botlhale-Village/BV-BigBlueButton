@@ -308,7 +308,7 @@ class UserDropdown extends PureComponent {
           }, Session.set('dropdownOpen', true),
         ),
         'user',
-        'right_arrow',
+        'angle-right',
       ));
     }
 
@@ -327,7 +327,7 @@ class UserDropdown extends PureComponent {
           Session.set('openPanel', 'chat');
           Session.set('idChatOpen', user.userId);
         },
-        'chat',
+        'comment-alt',
       ));
     }
 
@@ -336,7 +336,7 @@ class UserDropdown extends PureComponent {
         'clearStatus',
         intl.formatMessage(messages.ClearStatusLabel),
         () => this.onActionsHide(setEmojiStatus(user.userId, 'none')),
-        'clear_status',
+        'user-times',
       ));
     }
 
@@ -345,7 +345,7 @@ class UserDropdown extends PureComponent {
         'mute',
         intl.formatMessage(messages.MuteUserAudioLabel),
         () => this.onActionsHide(toggleVoice(user.userId)),
-        'mute',
+        'microphone-slash',
       ));
     }
 
@@ -354,7 +354,7 @@ class UserDropdown extends PureComponent {
         'unmute',
         intl.formatMessage(messages.UnmuteUserAudioLabel),
         () => this.onActionsHide(toggleVoice(user.userId)),
-        'unmute',
+        'microphone',
       ));
     }
 
@@ -365,7 +365,7 @@ class UserDropdown extends PureComponent {
           ? intl.formatMessage(messages.takePresenterLabel)
           : intl.formatMessage(messages.makePresenterLabel),
         () => this.onActionsHide(assignPresenter(user.userId)),
-        'presentation',
+        'desktop',
       ));
     }
 
@@ -374,7 +374,7 @@ class UserDropdown extends PureComponent {
         'promote',
         intl.formatMessage(messages.PromoteUserLabel),
         () => this.onActionsHide(changeRole(user.userId, 'MODERATOR')),
-        'promote',
+        'bullhorn',
       ));
     }
 
@@ -418,7 +418,7 @@ class UserDropdown extends PureComponent {
             onConfirm={removeUser}
           />,
         )),
-        'circle_close',
+        'times-circle',
       ));
     }
 

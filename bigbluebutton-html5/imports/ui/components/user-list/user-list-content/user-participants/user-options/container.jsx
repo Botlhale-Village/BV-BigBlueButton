@@ -37,7 +37,7 @@ const UserOptionsContainer = withTracker((props) => {
   const toggleStatus = () => {
     users.forEach(user => setEmojiStatus(user.userId, 'none'));
     notify(
-      intl.formatMessage(intlMessages.clearStatusMessage), 'info', 'clear_status',
+      intl.formatMessage(intlMessages.clearStatusMessage), 'info', 'user-times',
     );
   };
 

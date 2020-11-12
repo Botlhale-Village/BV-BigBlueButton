@@ -14,7 +14,9 @@ const ROLE_VIEWER = Meteor.settings.public.user.role_viewer;
 const PING_INTERVAL = 15000;
 
 export default class VideoController {
-  constructor() {
+  constructor(screenLayout) {
+    this.screenLayout = screenLayout;
+
     this.streamInfo = [];
     this.webRtcPeers = {};
     this.restartTimeout = {};
@@ -43,22 +45,23 @@ export default class VideoController {
     stream.videoTag = tag;
   }
 
-  setVideoStream(index, cameraId) {
-    if (this.disposed) { return; }
-    const stream = this.streamInfo[index] || (this.streamInfo[index] = new VideoStreamHandler(this));
-    stream.cameraId = cameraId;
-  }
-
   init() {
     window.addEventListener('offline', this.onWsClose);
+    this.update();
   }
 
   update() {
     if (this.disposed) { return; }
+    const layoutStreams = this.screenLayout.streams;
     const cameraIds = {};
-    this.streamInfo.forEach((item) => {
-      if (item && item.cameraId && item.videoTag) { cameraIds[item.cameraId] = 1; }
-    });
+    for (var i = 0; i < layoutStreams.length; i++) {
+      var stream = layoutStreams[i];
+      if (stream) {
+        var streamInfo = this.streamInfo[i] || (this.streamInfo[i] = new VideoStreamHandler(this));
+        if (stream.stream) { streamInfo.cameraId = stream.stream.cameraId; } else { streamInfo.cameraId = null; }
+        if (streamInfo.cameraId && streamInfo.videoTag) { cameraIds[streamInfo.cameraId] = 1; }
+      }
+    }
 
     Object.keys(this.webRtcPeers).forEach((cameraId) => {
       if (!cameraIds[cameraId]) { this.stopWebRTCPeer(cameraId, false); }

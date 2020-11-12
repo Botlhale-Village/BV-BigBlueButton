@@ -1,4 +1,8 @@
 public:
+  hybeflex:
+    webcamsOnlyForModeratorOverride: true
+    hackyModeDeterminationEnabled: true
+    debugModeEnabled: true
   app:
     mobileFontSize: 16px
     desktopFontSize: 14px
@@ -23,7 +27,7 @@ public:
     allowUserLookup: false
     enableNetworkInformation: false
     enableLimitOfViewersInWebcam: false
-    enableMultipleCameras: false
+    enableMultipleCameras: true
     enableTalkingIndicator: true
     mirrorOwnWebcam: false
     viewersInWebcam: 8

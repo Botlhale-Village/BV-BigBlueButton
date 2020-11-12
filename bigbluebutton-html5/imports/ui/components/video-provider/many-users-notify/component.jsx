@@ -89,7 +89,7 @@ class LockViewersNotifyComponent extends Component {
         </React.Fragment>
       ),
       'info',
-      'rooms',
+      ' icon-bbb-rooms',
       {
         toastId: lockToastId,
       },

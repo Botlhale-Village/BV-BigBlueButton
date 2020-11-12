@@ -22,6 +22,8 @@ import getFromUserSettings from '/imports/ui/services/users-settings';
 import ControlPanel from '/imports/startup/controlpanel/component';
 import ScreenDisplay from '/imports/startup/screendisplay/component';
 
+import HybeFlexService, { HybeFlexAppMode } from '/imports/utils/hybeflex';
+
 const CHAT_CONFIG = Meteor.settings.public.chat;
 const CHAT_ENABLED = CHAT_CONFIG.enabled;
 const PUBLIC_CHAT_ID = CHAT_CONFIG.public_id;
@@ -199,12 +201,12 @@ class Base extends Component {
       return (<MeetingEnded code={codeError} />);
     }
 
-    if (fullname == 'superman') { return <ControlPanel />; }
-    if (fullname.slice(0, 6) == 'screen') {
-      const fields = fullname.split('_');
-      return <ScreenDisplay index={+fields[1] || 1} total={+fields[2] || 1} />;
+    switch (HybeFlexService.appMode) {
+      case HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING: return <LoadingScreen>{loading}</LoadingScreen>;
+      case HybeFlexAppMode.HYBEFLEX_APP_MODE_DEBUG: return <ControlPanel />;
+      case HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN: return <ScreenDisplay />;
     }
-    return (<AppContainer {...this.props} baseControls={stateControls} />);
+    return <AppContainer {...this.props} baseControls={stateControls} />;
   }
 
   render() {
@@ -298,7 +300,7 @@ const BaseContainer = withTracker(() => {
                   description="message when the breakout room is ended"
                 />,
                 'info',
-                'rooms',
+                ' icon-bbb-rooms',
               );
             }
           }, BREAKOUT_END_NOTIFY_DELAY);
@@ -318,7 +320,7 @@ const BaseContainer = withTracker(() => {
               description="Notification for when the recording starts"
             />,
             'success',
-            'record',
+            'dot-circle',
           );
         }
 
@@ -329,7 +331,7 @@ const BaseContainer = withTracker(() => {
               description="Notification for when the recording stops"
             />,
             'error',
-            'record',
+            'dot-circle',
           );
         }
       }

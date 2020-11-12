@@ -60,7 +60,7 @@ class ChatPushAlert extends PureComponent {
     return notify(
       ChatPushAlert.link(title, chatId),
       'info',
-      'chat',
+      'comment-alt',
       { onOpen, autoClose: alertDuration },
       ChatPushAlert.link(content, chatId),
       true,

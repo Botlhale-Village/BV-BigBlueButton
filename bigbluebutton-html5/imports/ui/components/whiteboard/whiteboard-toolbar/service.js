@@ -76,7 +76,7 @@ const filterAnnotationList = () => {
 
   if (!isPresenter() && multiUserPenOnly) {
     filteredAnnotationList = [{
-      icon: 'pen_tool',
+      icon: 'pen',
       value: 'pencil',
     }];
   }

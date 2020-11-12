@@ -598,7 +598,7 @@ class PresentationUploader extends Component {
               aria-label={formattedDownloadableAriaLabel}
               hideLabel
               size="sm"
-              icon={item.isDownloadable ? 'download' : ' icon-bbb-download-off'}
+              icon={item.isDownloadable ? 'file-download' : ' icon-bbb-download_off'}
               onClick={() => this.toggleDownloadable(item)}
             />
             <Checkbox

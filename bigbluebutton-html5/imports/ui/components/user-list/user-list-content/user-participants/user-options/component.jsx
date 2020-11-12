@@ -288,7 +288,7 @@ class UserOptions extends PureComponent {
       ),
       (canInviteUsers && isMeteorConnected ? (
         <DropdownListItem
-          icon="icon-bbb-rooms"
+          icon=" icon-bbb-rooms"
           label={intl.formatMessage(intlMessages.invitationItem)}
           key={this.createBreakoutId}
           onClick={this.onInvitationUsers}

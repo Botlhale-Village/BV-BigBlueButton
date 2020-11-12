@@ -359,7 +359,7 @@ class AudioManager {
     }
 
     if (!this.error && !this.isEchoTest) {
-      this.notify(this.intl.formatMessage(this.messages.info.LEFT_AUDIO), false, 'audio_off');
+      this.notify(this.intl.formatMessage(this.messages.info.LEFT_AUDIO), false, 'phone-slash');
     }
     if (!this.isEchoTest) {
       this.playHangUpSound();

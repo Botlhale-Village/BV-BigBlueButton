@@ -21,7 +21,7 @@ const updateSettings = (obj, msg) => {
       notify(
         msg,
         'info',
-        'settings',
+        'cog',
       );
     }, 0);
   }

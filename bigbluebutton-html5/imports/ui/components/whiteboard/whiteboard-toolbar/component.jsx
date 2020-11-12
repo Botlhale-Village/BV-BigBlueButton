@@ -465,7 +465,7 @@ class WhiteboardToolbar extends Component {
         <ToolbarMenuItem
           disabled={isDisabled}
           label={intl.formatMessage(intlMessages.toolbarTools)}
-          icon={annotationSelected.icon}
+          icon={this.getIcon(annotationSelected.icon)}
           onItemClick={this.displaySubMenu}
           objectToReturn="annotationList"
           onBlur={this.closeSubMenu}
@@ -489,6 +489,30 @@ class WhiteboardToolbar extends Component {
             : null}
         </ToolbarMenuItem>
       );
+  }
+
+  
+  getIcon(icon){
+    switch(icon)
+    {
+      case "text_tool":
+        return " icon-bbb-text_tool";
+      case "line_tool":
+        return " icon-bbb-line_tool";
+      case "circle_tool":
+        return " icon-bbb-circle_tool";
+      case "triangle_tool":
+        return " icon-bbb-triangle_tool";
+      case "rectangle_tool":
+        return " icon-bbb-rectangle_tool";
+      case "pen_tool":
+        return "pen";
+      case "hand":
+        return "hand-paper";
+        default:
+          return "question";
+
+    }
   }
 
   renderFontItem() {
