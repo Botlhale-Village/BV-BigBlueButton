@@ -6,6 +6,7 @@ import ActionsDropdown from './actions-dropdown/component';
 import QuickPollDropdown from './quick-poll-dropdown/component';
 import AudioControlsContainer from '../audio/audio-controls/container';
 import JoinVideoOptionsContainer from '../video-provider/video-button/container';
+import JoinVideoAllContainer from '../video-provider/video-button-all/container';
 import CaptionsButtonContainer from '/imports/ui/components/actions-bar/captions/container';
 import PresentationOptionsContainer from './presentation-options/component';
 
@@ -78,11 +79,8 @@ class ActionsBar extends PureComponent {
         </div>
         <div className={cx(actionBarClasses)}>
           <AudioControlsContainer />
-          {enableVideo
-            ? (
-              <JoinVideoOptionsContainer />
-            )
-            : null}
+          {enableVideo ? <JoinVideoOptionsContainer /> : null }
+          {enableVideo ? <JoinVideoAllContainer /> : null }
           <DesktopShare {...{
             handleShareScreen,
             handleUnshareScreen,

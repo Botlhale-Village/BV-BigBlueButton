@@ -165,7 +165,6 @@ class Base extends Component {
     const stateControls = { updateLoadingState };
     const { loading } = this.state;
     const {
-      fullname,
       codeError,
       ejected,
       meetingExist,
@@ -379,7 +378,6 @@ const BaseContainer = withTracker(() => {
   const codeError = Session.get('codeError');
 
   return {
-    fullname: credentials.fullname.toLowerCase(),
     approved,
     ejected,
     locale,

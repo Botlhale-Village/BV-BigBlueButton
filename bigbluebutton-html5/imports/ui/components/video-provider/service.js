@@ -129,7 +129,8 @@ class VideoService {
   }
 
   joinVideo(deviceId) {
-    this.deviceId = deviceId;
+    if (!this.pendingDeviceIds) { this.pendingDeviceIds = []; }
+    this.pendingDeviceIds.push(deviceId);
     this.isConnecting = true;
   }
 
@@ -137,7 +138,15 @@ class VideoService {
     this.isConnected = true;
   }
 
+  joinMultipleVideo(deviceIds) {
+    if (!deviceIds || !deviceIds.length) { return; }
+    if (!this.pendingDeviceIds) { this.pendingDeviceIds = []; }
+    this.pendingDeviceIds = this.pendingDeviceIds.concat(deviceIds);
+    this.isConnecting = true;
+  }
+
   exitVideo() {
+    this.pendingDeviceIds = null;
     if (this.isConnected) {
       logger.info({
         logCode: 'video_provider_unsharewebcam',
@@ -156,7 +165,7 @@ class VideoService {
 
   exitedVideo() {
     this.isConnecting = false;
-    this.deviceId = null;
+    this.pendingDeviceIds = null;
     this.isConnected = false;
   }
 
@@ -295,20 +304,22 @@ class VideoService {
   }
 
   getVideoStreams() {
-    let streams = HybeFlexService.filterStreams(VideoStreams.find(
+    const rawStreams = VideoStreams.find(
       { meetingId: Auth.meetingID },
       {
         fields: {
           userId: 1, stream: 1, name: 1,
         },
       },
-    ).fetch());
+    ).fetch();
+
+    var streams = HybeFlexService.filterStreams(rawStreams);
 
     const moderatorOnly = this.webcamsOnlyForModerator();
     if (moderatorOnly) streams = this.filterModeratorOnly(streams);
 
-    const connectingStream = this.getConnectingStream(streams);
-    if (connectingStream) streams.push(connectingStream);
+    const connectingStreams = this.getConnectingStreams(rawStreams);
+    if (connectingStreams && connectingStreams.length > 0) streams = streams.concat(connectingStreams);
 
     const mappedStreams = streams.map(vs => ({
       cameraId: vs.stream,
@@ -339,35 +350,48 @@ class VideoService {
     return { streams: paginatedStreams, totalNumberOfStreams: mappedStreams.length };
   }
 
-  getConnectingStream(streams) {
-    let connectingStream;
+  getConnectingStreams(streams) {
+    var connectingStreams = null;
 
     if (this.isConnecting) {
-      if (this.deviceId) {
-        const stream = this.buildStreamName(Auth.userID, this.deviceId);
-        if (!this.hasStream(streams, stream) && !this.isUserLocked()) {
-          connectingStream = {
-            stream,
-            userId: Auth.userID,
-            name: Auth.fullname,
-          };
-        } else {
-          // Connecting stream is already stored at database
-          this.deviceId = null;
-          this.isConnecting = false;
+      if (this.pendingDeviceIds && this.pendingDeviceIds.length > 0) {
+        const isLocked = this.isUserLocked();
+        for (var i = this.pendingDeviceIds.length - 1; i >= 0; i--) {
+          var deviceId = this.pendingDeviceIds[i];
+          var stream = this.buildStreamName(Auth.userID, deviceId);
+          if (!this.hasStream(streams, stream) && !isLocked) {
+            if (!connectingStreams) { connectingStreams = []; }
+            connectingStreams.push({
+              stream,
+              userId: Auth.userID,
+              name: Auth.fullname,
+            });
+          } else {
+            // Connecting stream is already stored at database
+            this.pendingDeviceIds.splice(i, 1);
+          }
         }
       } else {
         logger.error({
           logCode: 'video_provider_missing_deviceid',
         }, 'Could not retrieve a valid deviceId');
       }
+      if (!connectingStreams || !connectingStreams.length) {
+        this.isConnecting = false;
+      }
     }
 
-    return connectingStream;
+    return connectingStreams;
   }
 
   buildStreamName(userId, deviceId) {
     return `${userId}${TOKEN}${deviceId}`;
+  }
+
+  getLocalDeviceIdFromStream(cameraId) {
+    if (!cameraId) { return null; }
+    if (!cameraId.startsWith(Auth.userID + TOKEN)) { return null; }
+    return cameraId.slice(Auth.userID.length + TOKEN.length);
   }
 
   hasVideoStream() {
@@ -508,15 +532,18 @@ class VideoService {
     }
   }
 
-  getCameraProfile() {
+  getCameraProfile(cameraId) {
     const profileId = Session.get('WebcamProfileId') || '';
-    const cameraProfile = CAMERA_PROFILES.find(profile => profile.id === profileId)
+    const cameraProfile = {...(CAMERA_PROFILES.find(profile => profile.id === profileId)
       || CAMERA_PROFILES.find(profile => profile.default)
-      || CAMERA_PROFILES[0];
-    const deviceId = Session.get('WebcamDeviceId');
+      || CAMERA_PROFILES[0])};
+    var deviceId = this.getLocalDeviceIdFromStream(cameraId);
+    if (!deviceId) { deviceId = Session.get('WebcamDeviceId'); }
     if (deviceId) {
       cameraProfile.constraints = cameraProfile.constraints || {};
       cameraProfile.constraints.deviceId = { exact: deviceId };
+    } else {
+      cameraProfile.constraints = true;
     }
 
     return cameraProfile;
@@ -741,6 +768,7 @@ const videoService = new VideoService();
 export default {
   exitVideo: () => videoService.exitVideo(),
   joinVideo: deviceId => videoService.joinVideo(deviceId),
+  joinMultipleVideo: deviceIds => videoService.joinMultipleVideo(deviceIds),
   stopVideo: cameraId => videoService.stopVideo(cameraId),
   getVideoStreams: () => videoService.getVideoStreams(),
   getInfo: () => videoService.getInfo(),
@@ -752,7 +780,7 @@ export default {
   hasVideoStream: () => videoService.hasVideoStream(),
   disableReason: () => videoService.disableReason(),
   playStart: cameraId => videoService.playStart(cameraId),
-  getCameraProfile: () => videoService.getCameraProfile(),
+  getCameraProfile: (cameraId) => videoService.getCameraProfile(cameraId),
   addCandidateToPeer: (peer, candidate, cameraId) => videoService.addCandidateToPeer(peer, candidate, cameraId),
   processInboundIceQueue: (peer, cameraId) => videoService.processInboundIceQueue(peer, cameraId),
   getRole: isLocal => videoService.getRole(isLocal),

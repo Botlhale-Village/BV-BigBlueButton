@@ -495,7 +495,7 @@ class VideoProvider extends Component {
       // Use fallback STUN server
       iceServers = getMappedFallbackStun();
     } finally {
-      const { constraints, bitrate, id: profileId } = VideoService.getCameraProfile();
+      const { constraints, bitrate, id: profileId } = VideoService.getCameraProfile(cameraId);
       this.outboundIceQueues[cameraId] = [];
       const peerOptions = {
         mediaConstraints: {

@@ -71,6 +71,7 @@ class HybeFlexService {
     if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
       // View student streams only
       streams = streams.filter((stream) => {
+        if (stream.userId == this.user.userId) { return true; }
         if (stream.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return true; }
         return false;
       });
@@ -78,9 +79,9 @@ class HybeFlexService {
     if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) {
       // View local streams + speaking student + lecturer + interpreter streams
       streams = streams.filter((stream) => {
+        if (stream.userId == this.user.userId) { return true; }
         if (stream.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return true; }
         if (stream.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_INTERPRETER) { return true; }
-        if (stream.userId == this.user.userId) { return true; }
         if (this.speakingUser && stream.userId == this.speakingUser.userId) { return true; }
         return false;
       });
