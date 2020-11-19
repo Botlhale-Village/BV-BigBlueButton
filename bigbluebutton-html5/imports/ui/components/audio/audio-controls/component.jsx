@@ -7,6 +7,8 @@ import getFromUserSettings from '/imports/ui/services/users-settings';
 import withShortcutHelper from '/imports/ui/components/shortcut-help/service';
 import { styles } from './styles';
 
+import HybeFlexService, { HybeFlexAppMode } from '/imports/api/hybeflex/client';
+
 const intlMessages = defineMessages({
   joinAudio: {
     id: 'app.audio.joinAudio',
@@ -93,13 +95,13 @@ class AudioControls extends PureComponent {
         icon={muted ? 'microphone-slash' : 'microphone'}
         size="lg"
         circle
-        /* accessKey={shortcuts.togglemute} */
+        /*accessKey={shortcuts.togglemute}*/
       />
     );
 
     return (
       <span className={styles.container}>
-        {showMute && isVoiceUser ? toggleMuteBtn : null}
+        {showMute && isVoiceUser  ? toggleMuteBtn : null}
         <Button
           className={cx(inAudio || styles.btn)}
           onClick={inAudio ? handleLeaveAudio : handleJoinAudio}
@@ -116,6 +118,7 @@ class AudioControls extends PureComponent {
           circle
           /* accessKey={inAudio ? shortcuts.leaveaudio : shortcuts.joinaudio} */
         />
+        {HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT ?
         <Button
           className={cx(inAudio || styles.btn)}
           onClick={handleToggleRaiseHand}
@@ -128,7 +131,8 @@ class AudioControls extends PureComponent {
           icon={handRaised ? 'hand-paper' : 'hand-paper'}
           size="lg"
           circle
-        />
+        /> : null
+        }
       </span>
     );
   }

@@ -5,6 +5,7 @@ import userJoin from './userJoin';
 import pendingAuthenticationsStore from '../store/pendingAuthentications';
 import createDummyUser from '../modifiers/createDummyUser';
 import setConnectionIdAndAuthToken from '../modifiers/setConnectionIdAndAuthToken';
+import { updateUserAppMode } from '/imports/api/hybeflex/server/util';
 
 const clearOtherSessions = (sessionUserId, current = false) => {
   const serverSessions = Meteor.server.sessions;
@@ -102,6 +103,8 @@ export default function handleValidateAuthToken({ body }, meetingId) {
       inactivityCheck: false,
     },
   };
+
+  updateUserAppMode(User, modifier);
 
   const cb = (err, numChanged) => {
     if (err) {

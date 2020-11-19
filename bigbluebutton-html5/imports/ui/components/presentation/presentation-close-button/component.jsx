@@ -10,7 +10,8 @@ const intlMessages = defineMessages({
   },
 });
 
-const ClosePresentationComponent = ({ intl, toggleSwapLayout }) => (
+const ClosePresentationComponent = ({ intl, toggleSwapLayout }) => null;
+/*(
   <Button
     role="button"
     aria-labelledby="closeLabel"
@@ -23,6 +24,6 @@ const ClosePresentationComponent = ({ intl, toggleSwapLayout }) => (
     hideLabel
     className={styles.button}
   />
-);
+);*/
 
 export default injectIntl(ClosePresentationComponent);

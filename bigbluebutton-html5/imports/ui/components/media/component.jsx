@@ -26,8 +26,7 @@ const defaultProps = {
   webcamPlacement: 'top',
 };
 
-
-export default class Media extends Component {
+class Media extends Component {
   constructor(props) {
     super(props);
     this.refContainer = React.createRef();
@@ -97,3 +96,5 @@ export default class Media extends Component {
 
 Media.propTypes = propTypes;
 Media.defaultProps = defaultProps;
+
+export default Media;

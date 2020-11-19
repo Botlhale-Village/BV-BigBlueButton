@@ -1,27 +1,67 @@
-export const HybeFlexAppMode = {
-  HYBEFLEX_APP_MODE_DEBUG: -1,
-  HYBEFLEX_APP_MODE_LOADING: 0,
-  HYBEFLEX_APP_MODE_VIDEOSCREEN: 1,
-  HYBEFLEX_APP_MODE_STUDENT: 2,
-  HYBEFLEX_APP_MODE_LECTURER: 3,
-  HYBEFLEX_APP_MODE_INTERPRETER: 4,
-  HYBEFLEX_APP_MODE_NORMAL: 99,
-}
+import { Meteor } from 'meteor/meteor';
+import { Tracker } from 'meteor/tracker';
+import { HybeFlexAppMode } from './..';
+import Users from '/imports/api/users';
+
+export * from './..';
 
 const {
   webcamsOnlyForModeratorOverride: HYBEFLEX_WEBCAMS_ONLY_FOR_MODERATOR_OVERRIDE,
   hackyModeDeterminationEnabled: HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED,
-  debugModeEnabled: HYBEFLEX_DEBUG_MODE_ENABLED,
 } = Meteor.settings.public.hybeflex;
+
+var globalUserID = null;
 
 class HybeFlexService {
   constructor() {
+    this.meetingId = null;
+    this.userId = null;
     this.user = null;
     this.speakingUser = null;
     this.appMode = HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING;
     this.screenIndex = 0;
     this.screenCount = 0;
     this.screenLayout = [];
+
+    this.videoCameraElements = {};
+    this.selectedVideoCameraId = {
+      value: null,
+      tracker: new Tracker.Dependency(),
+    };
+
+    this.sortVideoScreenStreamsCallback = this.sortVideoScreenStreamsCallback.bind(this);
+    this.sortUserListCallback = this.sortUserListCallback.bind(this);
+    this.filterUserListCallback = this.filterUserListCallback.bind(this);
+  }
+  
+  init(meetingId, userId) {
+    this.meetingId = meetingId;
+    this.userId = globalUserID = userId;
+    if (!this.trackerComputation) {
+      this.trackerComputation = Tracker.autorun(async () => {
+        this.speakingUser = Users.findOne({ meetingId: this.meetingId, isActiveSpeaker: true });
+        const user = Users.findOne({ userId: this.userId, approved: true });
+        if (user && user.appMode) {
+          this.user = user;
+          this.appMode = user.appMode;
+          if (HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED && this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
+            const fields = user.name.split('_');
+            this.initScreenCount(fields[1], fields[2]);
+          }
+        }
+      });
+    }
+  }
+
+  getSelectedVideoCameraId() {
+    this.selectedVideoCameraId.tracker.depend();
+    return this.selectedVideoCameraId.value;
+  }
+
+  setSelectedVideoCameraId(cameraId) {
+    if (this.selectedVideoCameraId.value === cameraId) { return; }
+    this.selectedVideoCameraId.value = cameraId;
+    this.selectedVideoCameraId.tracker.changed();
   }
 
   getWebcamsOnlyForModeratorOverride() {
@@ -33,43 +73,22 @@ class HybeFlexService {
     return this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER;
   }
 
-  static getAppModeByUser(user) {
-    if (user && user.userId) {
-      switch (user.userId[0]) {
-        case 'V': return HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN;
-        case 'L': return HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER;
-        case 'I': return HybeFlexAppMode.HYBEFLEX_APP_MODE_INTERPRETER;
-        case 'S': return HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT;
-        case 'X': if (HYBEFLEX_DEBUG_MODE_ENABLED) { return HybeFlexAppMode.HYBEFLEX_APP_MODE_DEBUG; }
-      }
-      if (HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED && user.name) {
-        var name = user.name.toLowerCase();
-        if (name == 'superman' && HYBEFLEX_DEBUG_MODE_ENABLED) { return HybeFlexAppMode.HYBEFLEX_APP_MODE_DEBUG; }
-        if (name.slice(0, 7) == 'screen_') { return HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN; }
-        if (name.slice(0, 4) == 'lec_') { return HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER; }
-        if (name.slice(0, 4) == 'int_') { return HybeFlexAppMode.HYBEFLEX_APP_MODE_INTERPRETER; }
-        return HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT;
-      }
-    }
-    return HybeFlexAppMode.HYBEFLEX_APP_MODE_NORMAL;
+  canUnmute() {
+    if (this.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return true; }
+    return !!(this.speakingUser && this.speakingUser.userId == this.userId);
   }
 
-  setUser(user) {
-    if (this.user) { return; }
-    this.user = user;
-    this.appMode = HybeFlexService.getAppModeByUser(user);
-    if (HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED && this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
-      var fields = user.name.split('_');
-      this.initScreenCount(fields[1], fields[2]);
-    }
+  populateStreamAppMode(streams) {
+    var userAppMode = {};
+    var users = Users.find({ meetingId: this.meetingId }).fetch();
+    for (var i = users.length - 1; i >= 0; i--) { userAppMode[users[i].userId] = users[i].appMode; }
+    for (var i = streams.length - 1; i >= 0; i--) { streams[i].appMode = userAppMode[streams[i].userId]; }
   }
 
   filterStreams(streams) {
-    for (var i = streams.length - 1; i >= 0; i--) {
-      streams[i].appMode = HybeFlexService.getAppModeByUser(streams[i]);
-    }
     if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
       // View student streams only
+      this.populateStreamAppMode(streams);
       streams = streams.filter((stream) => {
         if (stream.userId == this.user.userId) { return true; }
         if (stream.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return true; }
@@ -78,6 +97,7 @@ class HybeFlexService {
     }
     if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) {
       // View local streams + speaking student + lecturer + interpreter streams
+      this.populateStreamAppMode(streams);
       streams = streams.filter((stream) => {
         if (stream.userId == this.user.userId) { return true; }
         if (stream.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return true; }
@@ -98,9 +118,9 @@ class HybeFlexService {
     return streams;
   }
 
-  static sortVideoScreenStreams(s1, s2) {
-    if (s1.userId === Auth.userID && s2.userId !== Auth.userID) { return -1; }
-    if (s2.userId === Auth.userID && s1.userId !== Auth.userID) { return 1; }
+  sortVideoScreenStreamsCallback(s1, s2) {
+    if (s1.userId === this.userId && s2.userId !== this.userId) { return -1; }
+    if (s2.userId === this.userId && s1.userId !== this.userId) { return 1; }
     const aName = a.name.toLowerCase();
     const bName = b.name.toLowerCase();
     if (aName < bName) { return -1; }
@@ -108,6 +128,30 @@ class HybeFlexService {
     if (a.userId > b.userId) { return -1; }
     if (a.userId < b.userId) { return 1; }
     return 0;
+  }
+
+  sortUserListCallback(u1, u2) {
+    var score1 = 0, score2 = 0;
+
+    if (u1.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { score1 += 1000; }
+    else if (u1.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_INTERPRETER) { score1 += 100; }
+    else if (u1.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { score1 += 10; }
+    if (u1.isActiveSpeaker) { score1++; }
+
+    if (u2.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { score2 += 1000; }
+    else if (u2.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_INTERPRETER) { score2 += 100; }
+    else if (u2.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { score2 += 10; }
+    if (u2.isActiveSpeaker) { score2++; }
+
+    return score2 - score1;
+  }
+
+  filterUserListCallback(u) {
+    if (u.userId == this.userId) { return true; }
+    if (u.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT ||
+        u.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER ||
+        u.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_INTERPRETER) { return true; }
+    return false;
   }
 
   initScreenCount(index, count) {

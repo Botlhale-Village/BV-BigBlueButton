@@ -14,6 +14,8 @@ import KEY_CODES from '/imports/utils/keyCodes';
 import AudioService from '/imports/ui/components/audio/service';
 import logger from '/imports/startup/client/logger';
 
+import HybeFlexService from '/imports/api/hybeflex/client';
+
 const CHAT_CONFIG = Meteor.settings.public.chat;
 const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
 const ROLE_MODERATOR = Meteor.settings.public.user.role_moderator;
@@ -121,6 +123,10 @@ const sortUsers = (a, b) => {
   }
 
   if (sort === 0) {
+    sort = HybeFlexService.sortUserListCallback(a, b);
+  }
+
+  if (sort === 0) {
     sort = sortUsersByEmoji(a, b);
   }
 
@@ -178,6 +184,7 @@ const sortChats = (a, b) => {
 const userFindSorting = {
   emojiTime: 1,
   role: 1,
+  appMode: 1,
   phoneUser: 1,
   name: 1,
   userId: 1,
@@ -188,8 +195,10 @@ const getUsers = () => {
     .find({
       meetingId: Auth.meetingID,
       connectionStatus: 'online',
-    }, userFindSorting)
+    }, { fields: userFindSorting })
     .fetch();
+
+  users = users.filter(HybeFlexService.filterUserListCallback);
 
   const currentUser = Users.findOne({ userId: Auth.userID }, { fields: { role: 1, locked: 1 } });
   if (currentUser && currentUser.role === ROLE_VIEWER && currentUser.locked) {

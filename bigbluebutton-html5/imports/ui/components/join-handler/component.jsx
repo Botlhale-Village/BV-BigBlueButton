@@ -9,8 +9,6 @@ import logger from '/imports/startup/client/logger';
 import LoadingScreen from '/imports/ui/components/loading-screen/component';
 import Users from '/imports/api/users';
 
-import HybeFlexService from '/imports/utils/hybeflex';
-
 const propTypes = {
   children: PropTypes.element.isRequired,
 };
@@ -190,10 +188,9 @@ class JoinHandler extends Component {
       setModOnlyMessage(response);
 
       Tracker.autorun(async (cd) => {
-        const user = Users.findOne({ userId: Auth.userID, approved: true });
+        const user = Users.findOne({ userId: Auth.userID, approved: true }, { fields: { _id: 1 } });
 
         if (user) {
-          HybeFlexService.setUser(user);
           await setCustomData(response);
           cd.stop();
         }

@@ -9,6 +9,8 @@ import {
 } from './service';
 import ScreenshareComponent from './component';
 
+import HybeFlexService from '/imports/api/hybeflex/client';
+
 const ScreenshareContainer = (props) => {
   const { isVideoBroadcasting: isVB } = props;
   if (isVB()) {
@@ -28,5 +30,6 @@ export default withTracker(() => {
     getSwapLayout,
     shouldEnableSwapLayout,
     toggleSwapLayout: MediaService.toggleSwapLayout,
+    selectedVideoCameraId: HybeFlexService.getSelectedVideoCameraId(),
   };
 })(ScreenshareContainer);

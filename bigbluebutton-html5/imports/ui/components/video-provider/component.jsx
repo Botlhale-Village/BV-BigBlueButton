@@ -1,8 +1,8 @@
-import React, { Component } from 'react';
+import React, { Component, createContext } from 'react';
 import PropTypes from 'prop-types';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import VideoService from './service';
-import VideoListContainer from './video-list/container';
+//import VideoListContainer from './video-list/container';
 import { defineMessages, injectIntl } from 'react-intl';
 import {
   fetchWebRTCMappedStunTurnServers,
@@ -11,6 +11,8 @@ import {
 import { tryGenerateIceCandidates } from '/imports/utils/safari-webrtc';
 import logger from '/imports/startup/client/logger';
 import _ from 'lodash';
+
+export const VideoProviderContext = createContext();
 
 // Default values and default empty object to be backwards compat with 2.2.
 // FIXME Remove hardcoded defaults 2.3.
@@ -786,6 +788,7 @@ class VideoProvider extends Component {
       video.pause();
       video.srcObject = stream;
       video.load();
+      video.play();
 
       peer.attached = true;
       delete this.videoTags[cameraId];
@@ -881,16 +884,33 @@ class VideoProvider extends Component {
   }
 
   render() {
-    const { swapLayout, currentVideoPageIndex, streams } = this.props;
-
-    return (
+    const {
+      swapLayout,
+      currentVideoPageIndex,
+      streams,
+      selectedVideoChildren,
+      selectedVideoCameraId,
+      children,
+    } = this.props;
+    
+    return <VideoProviderContext.Provider value={{
+      swapLayout,
+      currentVideoPageIndex,
+      streams,
+      selectedVideoChildren,
+      selectedVideoCameraId,
+      onMount: this.createVideoTag
+    }}>
+      {children}
+    </VideoProviderContext.Provider>;
+    /*return (
       <VideoListContainer
         streams={streams}
         onMount={this.createVideoTag}
         swapLayout={swapLayout}
         currentVideoPageIndex={currentVideoPageIndex}
       />
-    );
+    );*/
   }
 }
 

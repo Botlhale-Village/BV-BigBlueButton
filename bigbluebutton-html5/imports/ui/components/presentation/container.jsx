@@ -10,6 +10,8 @@ import Meetings from '/imports/api/meetings';
 import Users from '/imports/api/users';
 import getFromUserSettings from '/imports/ui/services/users-settings';
 
+import HybeFlexService from '/imports/api/hybeflex/client';
+
 const ROLE_VIEWER = Meteor.settings.public.user.role_viewer;
 
 const PresentationAreaContainer = ({ presentationPodIds, mountPresentationArea, ...props }) => (
@@ -59,5 +61,6 @@ export default withTracker(({ podId }) => {
       'bbb_force_restore_presentation_on_new_events',
       Meteor.settings.public.presentation.restoreOnUpdate,
     ),
+    selectedVideoCameraId: HybeFlexService.getSelectedVideoCameraId(),
   };
 })(PresentationAreaContainer);

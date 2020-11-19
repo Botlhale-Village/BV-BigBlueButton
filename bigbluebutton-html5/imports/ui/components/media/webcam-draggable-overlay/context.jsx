@@ -176,7 +176,7 @@ const withProvider = Component => props => (
 
 const withDraggableConsumer = Component => ContextConsumer(Component);
 
-const withDraggableContext = Component => withProvider(withDraggableConsumer(Component));
+const withDraggableContext = Component => withProvider(Component);
 
 export {
   withProvider,

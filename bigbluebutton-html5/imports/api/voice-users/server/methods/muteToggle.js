@@ -6,6 +6,8 @@ import VoiceUsers from '/imports/api/voice-users';
 import Meetings from '/imports/api/meetings';
 import Logger from '/imports/startup/server/logger';
 
+import { HybeflexAppMode } from '/imports/api/hybeflex';
+
 export default function muteToggle(uId) {
   const REDIS_CONFIG = Meteor.settings.private.redis;
   const CHANNEL = REDIS_CONFIG.channels.toAkkaApps;
@@ -18,6 +20,10 @@ export default function muteToggle(uId) {
     meetingId,
     userId: requesterUserId,
   });
+
+  if (requester && requester.appMode == HybeflexAppMode.HYBEFLEX_APP_MODE_STUDENT) {
+    if (!requester.isActiveSpeaker) { return; }
+  }
 
   const voiceUser = VoiceUsers.findOne({
     intId: userToMute,

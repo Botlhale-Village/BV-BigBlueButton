@@ -5,8 +5,8 @@ import _ from 'lodash';
 import browser from 'browser-detect';
 import PropTypes from 'prop-types';
 import Resizable from 're-resizable';
-import { withDraggableContext } from './context';
-import VideoProviderContainer from '/imports/ui/components/video-provider/container';
+import { withDraggableConsumer } from './context';
+import VideoListContainer from '/imports/ui/components/video-provider/video-list/container';
 import { styles } from '../styles.scss';
 import Storage from '../../../services/storage/session';
 
@@ -330,68 +330,56 @@ class WebcamDraggable extends Component {
           />
         </div>
 
-        <Draggable
-          handle="video"
-          bounds="#container"
-          onStart={this.handleWebcamDragStart}
-          onStop={this.handleWebcamDragStop}
-          onMouseDown={e => e.preventDefault()}
-          disabled={swapLayout || isCameraFullscreen || BROWSER_ISMOBILE}
-          position={position}
+        <Resizable
+          size={
+            singleWebcam
+              ? {
+                height: videoListSize.height,
+                width: videoListSize.width,
+              }
+              : {
+                height: videoListSize.height,
+              }
+          }
+          lockAspectRatio
+          handleWrapperClass="resizeWrapper"
+          onResize={dispatchResizeEvent}
+          onResizeStop={this.onResizeStop}
+          enable={{
+            top: !(placement === 'top') && !swapLayout,
+            bottom: !(placement === 'bottom') && !swapLayout,
+            left: false,
+            right: false,
+            topLeft: false,
+            topRight: false,
+            bottomLeft: false,
+            bottomRight: false,
+          }}
+          className={
+            !swapLayout
+              ? overlayClassName
+              : contentClassName}
+          style={{
+            marginLeft: singleWebcam
+              && !(placement === 'bottom' || placement === 'top')
+              ? 10
+              : 0,
+            marginRight: singleWebcam
+              && !(placement === 'bottom' || placement === 'top')
+              ? 10
+              : 0,
+          }}
         >
-          <Resizable
-            size={
-              singleWebcam
-                ? {
-                  height: videoListSize.height,
-                  width: videoListSize.width,
-                }
-                : {
-                  height: videoListSize.height,
-                }
-            }
-            lockAspectRatio
-            handleWrapperClass="resizeWrapper"
-            onResize={dispatchResizeEvent}
-            onResizeStop={this.onResizeStop}
-            enable={{
-              top: !(placement === 'top') && !swapLayout,
-              bottom: !(placement === 'bottom') && !swapLayout,
-              left: false,
-              right: false,
-              topLeft: false,
-              topRight: false,
-              bottomLeft: false,
-              bottomRight: false,
-            }}
-            className={
-              !swapLayout
-                ? overlayClassName
-                : contentClassName}
-            style={{
-              marginLeft: singleWebcam
-                && !(placement === 'bottom' || placement === 'top')
-                ? 10
-                : 0,
-              marginRight: singleWebcam
-                && !(placement === 'bottom' || placement === 'top')
-                ? 10
-                : 0,
-            }}
-          >
-            {
-              !disableVideo
-                && !audioModalIsOpen
-                ? (
-                  <VideoProviderContainer
-                    swapLayout={swapLayout}
-                  />
-                )
-                : null
-            }
-          </Resizable>
-        </Draggable>
-
+          {
+            !disableVideo
+              && !audioModalIsOpen
+              ? (
+                <VideoListContainer />
+              )
+              : null
+          }
+        </Resizable>
+        
         <div
           className={dropZoneBottomClassName}
           style={{ height: !singleWebcam ? '50%' : '20%' }}
@@ -408,4 +396,17 @@ class WebcamDraggable extends Component {
 WebcamDraggable.propTypes = propTypes;
 WebcamDraggable.defaultProps = defaultProps;
 
-export default withDraggableContext(WebcamDraggable);
+export default withDraggableConsumer(WebcamDraggable);
+
+/*
+<Draggable
+          handle="video"
+          bounds="#container"
+          onStart={this.handleWebcamDragStart}
+          onStop={this.handleWebcamDragStop}
+          onMouseDown={e => e.preventDefault()}
+          disabled={swapLayout || isCameraFullscreen || BROWSER_ISMOBILE}
+          position={position}
+        >
+        </Draggable>
+*/

@@ -3,7 +3,7 @@ import { withTracker } from 'meteor/react-meteor-data';
 import VideoService from '/imports/ui/components/video-provider/service';
 import VideoController from './service';
 
-import HybeFlexService from '/imports/utils/hybeflex';
+import HybeFlexService from '/imports/api/hybeflex/client';
 
 const screenStyle = {
   position: 'fixed',

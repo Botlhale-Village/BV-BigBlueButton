@@ -10,6 +10,8 @@ import { initAnnotationsStreamListener } from '/imports/ui/components/whiteboard
 import allowRedirectToLogoutURL from '/imports/ui/components/meeting-ended/service';
 import { initCursorStreamListener } from '/imports/ui/components/cursor/service';
 
+import HybeFlexService from '/imports/api/hybeflex/client';
+
 const CONNECTION_TIMEOUT = Meteor.settings.public.app.connectionTimeout;
 
 class Auth {
@@ -160,6 +162,7 @@ class Auth {
     this.fullname = fullname;
     this.externUserID = externUserID;
     this.confname = confname;
+    HybeFlexService.init(meetingId, requesterUserId);
   }
 
   clearCredentials(...args) {

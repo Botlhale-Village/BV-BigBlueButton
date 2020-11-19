@@ -20,6 +20,8 @@ const propTypes = {
   swapLayout: PropTypes.bool.isRequired,
   numberOfPages: PropTypes.number.isRequired,
   currentVideoPageIndex: PropTypes.number.isRequired,
+  selectedVideoChildren: PropTypes.element,
+  selectedVideoCameraId: PropTypes.string,
 };
 
 const intlMessages = defineMessages({
@@ -121,8 +123,10 @@ class VideoList extends Component {
   }
 
   setOptimalGrid() {
-    const { streams } = this.props;
+    const { streams, selectedVideoCameraId, selectedVideoChildren } = this.props;
     let numItems = streams.length;
+    if (selectedVideoChildren) { numItems += selectedVideoChildren.length; }
+    if (selectedVideoCameraId) { numItems--; }
     if (numItems < 1 || !this.canvas || !this.grid) {
       return;
     }
@@ -265,12 +269,15 @@ class VideoList extends Component {
       streams,
       onMount,
       swapLayout,
+      selectedVideoChildren,
+      selectedVideoCameraId,
     } = this.props;
     const { focusedId } = this.state;
 
     const numOfStreams = streams.length;
-    return streams.map((stream) => {
+    const elements = streams.map((stream) => {
       const { cameraId, userId, name } = stream;
+      if (selectedVideoCameraId == cameraId) { return null; }
       const isFocused = focusedId === cameraId;
       const isFocusedIntlKey = !isFocused ? 'focus' : 'unfocus';
       let actions = [];
@@ -306,6 +313,23 @@ class VideoList extends Component {
         </div>
       );
     });
+
+    if (selectedVideoChildren) {
+      selectedVideoChildren.forEach((child, index) => {
+        elements.push(<div
+          key={'mediaChildren' + index}
+          className={cx({
+            [styles.videoListItem]: true
+          })}
+        >
+          <div style={{position:'relative',width:'100%',height:'100%'}}>
+            {child}
+          </div>
+        </div>);
+      });
+    }
+
+    return elements;
   }
 
   render() {

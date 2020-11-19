@@ -50,6 +50,7 @@ const {
   isConnecting,
   isHangingUp,
   isTalking,
+  isHandRaised,
   toggleMuteMicrophone,
   toggleRaiseHand,
   joinListenOnly,
@@ -58,6 +59,7 @@ const {
 export default lockContextContainer(withModalMounter(withTracker(({ mountModal, userLocks }) => ({
   processToggleMuteFromOutside: arg => processToggleMuteFromOutside(arg),
   showMute: isConnected() && !isListenOnly() && !isEchoTest() && !userLocks.userMic,
+  handRaised: isHandRaised(),
   muted: isConnected() && !isListenOnly() && isMuted(),
   inAudio: isConnected() && !isEchoTest(),
   listenOnly: isConnected() && isListenOnly(),

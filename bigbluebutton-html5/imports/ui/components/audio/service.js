@@ -7,6 +7,9 @@ import VoiceUsers from '/imports/api/voice-users';
 import logger from '/imports/startup/client/logger';
 import Service from '/imports/ui/components/user-list/service';
 
+import { notify } from '/imports/ui/services/notification';
+import HybeFlexService, { HybeFlexAppMode } from '/imports/api/hybeflex/client';
+
 const ROLE_MODERATOR = Meteor.settings.public.user.role_moderator;
 
 const init = (messages, intl) => {
@@ -46,6 +49,10 @@ const toggleRaiseHand = () => {
   }
 };
 
+const isHandRaised = () => {
+  return Users.findOne({ userId: Auth.userID }, { fields: { emoji: 1 } }).emoji == 'raiseHand';
+};
+
 const isVoiceUser = () => {
   const voiceUser = VoiceUsers.findOne({ intId: Auth.userID },
     { fields: { joined: 1 } });
@@ -58,6 +65,10 @@ const toggleMuteMicrophone = () => {
   }, { fields: { muted: 1 } });
 
   if (user.muted) {
+    if (!HybeFlexService.canUnmute()) {
+      notify('To unmute please raise your hand and wait for a speaking turn.', 'error', 'audio');
+      return;
+    }
     logger.info({
       logCode: 'audiomanager_unmute_audio',
       extraInfo: { logType: 'user_action' },
@@ -81,6 +92,7 @@ export default {
   joinEchoTest: () => AudioManager.joinEchoTest(),
   toggleMuteMicrophone,
   toggleRaiseHand,
+  isHandRaised,
   changeInputDevice: inputDeviceId => AudioManager.changeInputDevice(inputDeviceId),
   changeOutputDevice: outputDeviceId => AudioManager.changeOutputDevice(outputDeviceId),
   isConnected: () => AudioManager.isConnected,

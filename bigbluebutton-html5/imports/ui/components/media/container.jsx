@@ -6,6 +6,8 @@ import PropTypes from 'prop-types';
 import { Session } from 'meteor/session';
 import { notify } from '/imports/ui/services/notification';
 import VideoService from '/imports/ui/components/video-provider/service';
+import VideoProviderContainer from '/imports/ui/components/video-provider/container';
+import EmbeddedVideoListItemContainer from '/imports/ui/components/video-provider/video-list/video-list-item/embeddedcontainer';
 import getFromUserSettings from '/imports/ui/services/users-settings';
 import { withModalMounter } from '/imports/ui/components/modal/service';
 import Media from './component';
@@ -15,6 +17,9 @@ import ScreenshareContainer from '../screenshare/container';
 import DefaultContent from '../presentation/default-content/component';
 import ExternalVideoContainer from '../external-video-player/container';
 import Storage from '../../services/storage/session';
+import { withDraggableContext } from './webcam-draggable-overlay/context';
+
+import HybeFlexService from '/imports/api/hybeflex/client';
 
 const LAYOUT_CONFIG = Meteor.settings.public.layout;
 const KURENTO_CONFIG = Meteor.settings.public.kurento;
@@ -98,11 +103,18 @@ class MediaContainer extends Component {
   }
 
   render() {
-    return <Media {...this.props} />;
+    const { swapLayout, selectedVideoChildren, selectedVideoCameraId } = this.props;
+    return <VideoProviderContainer
+      swapLayout={swapLayout}
+      selectedVideoChildren={selectedVideoChildren}
+      selectedVideoCameraId={selectedVideoCameraId}
+    >
+      <Media {...this.props} />
+    </VideoProviderContainer>;
   }
 }
 
-export default withModalMounter(withTracker(() => {
+export default withDraggableContext(withModalMounter(withTracker(() => {
   const { dataSaving } = Settings;
   const { viewParticipantsWebcams, viewScreenshare } = dataSaving;
   const hidePresentation = getFromUserSettings('bbb_hide_presentation', LAYOUT_CONFIG.hidePresentation);
@@ -151,6 +163,24 @@ export default withModalMounter(withTracker(() => {
 
   data.webcamPlacement = Storage.getItem('webcamPlacement');
 
+  data.selectedVideoCameraId = HybeFlexService.getSelectedVideoCameraId();
+
+  if (data.selectedVideoCameraId) {
+    const found = usersVideo.find((x) => x.cameraId == data.selectedVideoCameraId);
+    if (!found) {
+      HybeFlexService.setSelectedVideoCameraId(null);
+      data.selectedVideoCameraId = null;
+    } else {
+      data.selectedVideoChildren = [data.children];
+      data.children = <EmbeddedVideoListItemContainer
+        streams={usersVideo}
+        cameraId={data.selectedVideoCameraId}
+        userId={found.userId}
+        name={found.name}
+      />;
+    }
+  }
+
   MediaContainer.propTypes = propTypes;
   return data;
-})(injectIntl(MediaContainer)));
+})(injectIntl(MediaContainer))));

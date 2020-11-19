@@ -14,7 +14,7 @@ import getFromUserSettings from '/imports/ui/services/users-settings';
 import logger from '/imports/startup/client/logger';
 import _ from 'lodash';
 
-import HybeFlexService, { HybeFlexAppMode } from '/imports/utils/hybeflex';
+import HybeFlexService, { HybeFlexAppMode } from '/imports/api/hybeflex/client';
 
 const CAMERA_PROFILES = Meteor.settings.public.kurento.cameraProfiles;
 const MULTIPLE_CAMERAS = Meteor.settings.public.app.enableMultipleCameras;
@@ -329,7 +329,7 @@ class VideoService {
 
     if (HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
       return {
-        streams: mappedStreams.sort(HybeFlexService.sortVideoScreenStreams),
+        streams: mappedStreams.sort(HybeFlexService.sortVideoScreenStreamsCallback),
         totalNumberOfStreams: mappedStreams.length
       };
     }

@@ -521,8 +521,9 @@ class UserDropdown extends PureComponent {
     const { clientType } = user;
     const isVoiceOnly = clientType === 'dial-in-user';
 
-    const iconUser = user.emoji !== 'none'
-      ? (<Icon iconName={normalizeEmojiName(user.emoji)} />)
+    const iconName = normalizeEmojiName(user.emoji);
+    const iconUser = user.emoji !== 'none' && iconName
+      ? (<Icon iconName={iconName} />)
       : user.name.toLowerCase().slice(0, 2);
 
     const iconVoiceOnlyUser = (<Icon iconName="phone-alt" />);

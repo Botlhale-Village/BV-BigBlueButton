@@ -17,7 +17,10 @@ import FullscreenService from '/imports/ui/components/fullscreen-button/service'
 import FullscreenButtonContainer from '/imports/ui/components/fullscreen-button/container';
 import { styles } from '../styles';
 import { withDraggableConsumer } from '/imports/ui/components/media/webcam-draggable-overlay/context';
+import MediaService, { getSwapLayout } from '/imports/ui/components/media/service';
 import VideoService from '../../service';
+
+import HybeFlexService, { HybeFlexAppMode } from '/imports/api/hybeflex/client';
 
 const ALLOW_FULLSCREEN = Meteor.settings.public.app.allowFullscreen;
 
@@ -25,6 +28,7 @@ class VideoListItem extends Component {
   constructor(props) {
     super(props);
     this.videoTag = null;
+    this.activeCameraId = null;
 
     this.state = {
       videoIsReady: false,
@@ -47,6 +51,7 @@ class VideoListItem extends Component {
       },
     );
 
+    this.activeCameraId = this.props.cameraId;
     onMount(this.videoTag);
 
     this.videoTag.addEventListener('loadeddata', this.setVideoIsReady);
@@ -54,6 +59,14 @@ class VideoListItem extends Component {
   }
 
   componentDidUpdate() {
+    if (this.videoTag && this.activeCameraId !== this.props.cameraId) {
+      this.activeCameraId = this.props.cameraId;
+      this.videoTag.pause();
+      this.videoTag.srcObject = null;
+      this.setState({ videoIsReady: false });
+      this.props.onMount(this.videoTag);
+    }
+
     const playElement = (elem) => {
       if (elem.paused) {
         elem.play().catch((error) => {
@@ -137,10 +150,11 @@ class VideoListItem extends Component {
       isFullscreen,
     } = this.state;
     const {
+      cameraId,
       name,
       voiceUser,
       numOfStreams,
-      webcamDraggableState,
+      //webcamDraggableState,
       swapLayout,
     } = this.props;
     const availableActions = this.getAvailableActions();
@@ -171,12 +185,17 @@ class VideoListItem extends Component {
             muted
             className={cx({
               [styles.media]: true,
-              [styles.cursorGrab]: !webcamDraggableState.dragging
-                && !isFullscreen && !swapLayout,
-              [styles.cursorGrabbing]: webcamDraggableState.dragging
-                && !isFullscreen && !swapLayout,
+              [styles.cursorPointer]: !isFullscreen &&
+                HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
+                HybeFlexService.selectedVideoCameraId.value != cameraId,
               [styles.mirroredVideo]: this.mirrorOwnWebcam,
             })}
+            onClick={() => {
+              if (isFullscreen) { return; }
+              if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return; }
+              if (getSwapLayout()) { MediaService.toggleSwapLayout(); }
+              HybeFlexService.setSelectedVideoCameraId(cameraId);
+            }}
             ref={(ref) => { this.videoTag = ref; }}
             autoPlay
             playsInline

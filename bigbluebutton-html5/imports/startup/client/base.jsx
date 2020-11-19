@@ -22,7 +22,7 @@ import getFromUserSettings from '/imports/ui/services/users-settings';
 import ControlPanel from '/imports/startup/controlpanel/component';
 import ScreenDisplay from '/imports/startup/screendisplay/component';
 
-import HybeFlexService, { HybeFlexAppMode } from '/imports/utils/hybeflex';
+import HybeFlexService, { HybeFlexAppMode } from '/imports/api/hybeflex/client';
 
 const CHAT_CONFIG = Meteor.settings.public.chat;
 const CHAT_ENABLED = CHAT_CONFIG.enabled;

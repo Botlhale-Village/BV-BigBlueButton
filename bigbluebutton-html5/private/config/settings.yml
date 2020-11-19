@@ -427,7 +427,7 @@ public:
 private:
   app:
     host: 127.0.0.1
-    port: 3000
+    port: 3001
     localesUrl: /locales
     pencilChunkLength: 100
     loadSlidesFromHttpAlways: false
@@ -456,7 +456,7 @@ private:
     - CheckAlivePongSysMsg
     - DoLatencyTracerMsg
   serverLog:
-    level: info
+    level: verbose
     streamerLog: false
   memoryMonitoring:
     stat:

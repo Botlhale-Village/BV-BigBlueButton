@@ -3,10 +3,9 @@ import { withTracker } from 'meteor/react-meteor-data';
 import VideoProvider from './component';
 import VideoService from './service';
 
-const VideoProviderContainer = ({ children, ...props }) => {
-  const { streams } = props;
-  return (!streams.length ? null : <VideoProvider {...props}>{children}</VideoProvider>);
-};
+const VideoProviderContainer = ({ children, ...props }) => (
+  <VideoProvider {...props}>{children}</VideoProvider>
+);
 
 export default withTracker(props => {
   // getVideoStreams returns a dictionary consisting of:
@@ -25,5 +24,8 @@ export default withTracker(props => {
     totalNumberOfStreams,
     isUserLocked: VideoService.isUserLocked(),
     currentVideoPageIndex: VideoService.getCurrentVideoPageIndex(),
+    children: props.children,
+    selectedVideoChildren: props.selectedVideoChildren,
+    selectedVideoCameraId: props.selectedVideoCameraId,
   };
 })(VideoProviderContainer);

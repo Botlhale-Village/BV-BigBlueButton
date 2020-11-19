@@ -81,7 +81,7 @@ const JoinVideoAllButton = ({
       onClick={handleOnClick}
       hideLabel
       color={hasVideoStream ? 'primary' : 'default'}
-      icon={hasVideoStream ? 'video' : 'video-slash'}
+      icon={hasVideoStream ? 'images' : 'video-slash'}
       ghost={!hasVideoStream}
       size="lg"
       circle

@@ -5,9 +5,12 @@ import _ from 'lodash';
 import FullscreenService from '../fullscreen-button/service';
 import FullscreenButtonContainer from '../fullscreen-button/container';
 import { styles } from './styles';
+import MediaService, { getSwapLayout } from '../media/service';
 import AutoplayOverlay from '../media/autoplay-overlay/component';
 import logger from '/imports/startup/client/logger';
 import playAndRetry from '/imports/utils/mediaElementPlayRetry';
+
+import HybeFlexService, { HybeFlexAppMode } from '/imports/api/hybeflex/client';
 
 const intlMessages = defineMessages({
   screenShareLabel: {
@@ -144,8 +147,8 @@ class ScreenshareComponent extends React.Component {
   }
 
   render() {
-    const { loaded, autoplayBlocked } = this.state;
-    const { intl } = this.props;
+    const { loaded, autoplayBlocked, isFullscreen } = this.state;
+    const { intl, selectedVideoCameraId } = this.props;
 
     return (
       [!loaded
@@ -180,6 +183,14 @@ class ScreenshareComponent extends React.Component {
             playsInline
             onLoadedData={this.onVideoLoad}
             ref={(ref) => { this.videoTag = ref; }}
+            onClick={() => {
+              if (isFullscreen) { return; }
+              if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return; }
+              if (getSwapLayout()) { MediaService.toggleSwapLayout(); }
+              HybeFlexService.setSelectedVideoCameraId(null);
+            }}
+            className={(!isFullscreen && HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
+              selectedVideoCameraId) ? styles.cursorPointer : ''}
             muted
           />
         </div>

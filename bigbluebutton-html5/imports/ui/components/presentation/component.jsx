@@ -10,11 +10,13 @@ import AnnotationGroupContainer from '../whiteboard/annotation-group/container';
 import PresentationOverlayContainer from './presentation-overlay/container';
 import Slide from './slide/component';
 import { styles } from './styles.scss';
-import MediaService, { shouldEnableSwapLayout } from '../media/service';
+import MediaService, { getSwapLayout, shouldEnableSwapLayout } from '../media/service';
 import PresentationCloseButton from './presentation-close-button/component';
 import DownloadPresentationButton from './download-presentation-button/component';
 import FullscreenService from '../fullscreen-button/service';
 import FullscreenButtonContainer from '../fullscreen-button/container';
+
+import HybeFlexService, { HybeFlexAppMode } from '/imports/api/hybeflex/client';
 
 const intlMessages = defineMessages({
   presentationLabel: {
@@ -407,10 +409,12 @@ class PresentationArea extends PureComponent {
       currentSlide,
       slidePosition,
       userIsPresenter,
+      selectedVideoCameraId,
     } = this.props;
 
     const {
       localPosition,
+      isFullscreen,
     } = this.state;
 
     if (!this.isPresentationAccessible()) {
@@ -479,7 +483,14 @@ class PresentationArea extends PureComponent {
           viewBox={svgViewBox}
           version="1.1"
           xmlns="http://www.w3.org/2000/svg"
-          className={styles.svgStyles}
+          onClick={() => {
+            if (isFullscreen) { return; }
+            if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return; }
+            if (getSwapLayout()) { MediaService.toggleSwapLayout(); }
+            HybeFlexService.setSelectedVideoCameraId(null);
+          }}
+          className={styles.svgStyles + ((!isFullscreen && HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
+            selectedVideoCameraId) ? (' ' + styles.cursorPointer) : '')}
         >
           <defs>
             <clipPath id="viewBox">
