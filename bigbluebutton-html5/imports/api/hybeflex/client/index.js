@@ -118,9 +118,9 @@ class HybeFlexService {
     return streams;
   }
 
-  sortVideoScreenStreamsCallback(s1, s2) {
-    if (s1.userId === this.userId && s2.userId !== this.userId) { return -1; }
-    if (s2.userId === this.userId && s1.userId !== this.userId) { return 1; }
+  sortVideoScreenStreamsCallback(a, b) {
+    if (a.userId === this.userId && b.userId !== this.userId) { return -1; }
+    if (b.userId === this.userId && a.userId !== this.userId) { return 1; }
     const aName = a.name.toLowerCase();
     const bName = b.name.toLowerCase();
     if (aName < bName) { return -1; }

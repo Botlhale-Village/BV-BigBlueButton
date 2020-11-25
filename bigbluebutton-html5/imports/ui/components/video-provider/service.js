@@ -129,6 +129,7 @@ class VideoService {
   }
 
   joinVideo(deviceId) {
+    if (this.isConnected && HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return; }
     if (!this.pendingDeviceIds) { this.pendingDeviceIds = []; }
     this.pendingDeviceIds.push(deviceId);
     this.isConnecting = true;
@@ -139,10 +140,14 @@ class VideoService {
   }
 
   joinMultipleVideo(deviceIds) {
+    if (this.isConnected && HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return; }
     if (!deviceIds || !deviceIds.length) { return; }
     if (!this.pendingDeviceIds) { this.pendingDeviceIds = []; }
     this.pendingDeviceIds = this.pendingDeviceIds.concat(deviceIds);
     this.isConnecting = true;
+    if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) {
+      while (this.pendingDeviceIds.length > 1) { this.pendingDeviceIds.pop(); }
+    }
   }
 
   exitVideo() {

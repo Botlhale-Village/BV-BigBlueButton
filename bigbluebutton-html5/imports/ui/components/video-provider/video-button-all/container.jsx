@@ -7,7 +7,7 @@ import VideoService from '../service';
 import HybeFlexService, { HybeFlexAppMode } from '/imports/api/hybeflex/client';
 
 const JoinVideoAllContainer = (props) => {
-  if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return null; }
+  //if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return null; }
   return <JoinVideoAllButton {...props} />;
 };
 
