@@ -480,7 +480,12 @@ class PresentationArea extends PureComponent {
           data-test="whiteboard"
           width={svgDimensions.width < 0 ? 0 : svgDimensions.width}
           height={svgDimensions.height < 0 ? 0 : svgDimensions.height}
-          ref={(ref) => { if (ref != null) { this.svggroup = ref; } }}
+          ref={(ref) => {
+            if (ref != null) {
+              this.svggroup = ref;
+              HybeFlexService.addPublishedStream(HybeFlexService.userId + '_presentation', ref);
+            }
+          }}
           viewBox={svgViewBox}
           version="1.1"
           xmlns="http://www.w3.org/2000/svg"
@@ -490,7 +495,6 @@ class PresentationArea extends PureComponent {
             if (getSwapLayout()) { MediaService.toggleSwapLayout(); }
             HybeFlexService.setSelectedVideoCameraId(null);
           }}
-          ref={(e) => { HybeFlexService.addPublishedStream(HybeFlexService.userId + '_presentation', e); }}
           className={styles.svgStyles + ((!isFullscreen && HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
             selectedVideoCameraId) ? (' ' + styles.cursorPointer) : '')}
         >
