@@ -137,6 +137,7 @@ class PresentationArea extends PureComponent {
   componentWillUnmount() {
     window.removeEventListener('resize', this.onResize);
     this.refPresentationContainer.removeEventListener('fullscreenchange', this.onFullscreenChange);
+    HybeFlexService.removePublishedStream(HybeFlexService.userId + '_presentation');
   }
 
   onFullscreenChange() {
@@ -489,6 +490,7 @@ class PresentationArea extends PureComponent {
             if (getSwapLayout()) { MediaService.toggleSwapLayout(); }
             HybeFlexService.setSelectedVideoCameraId(null);
           }}
+          ref={(e) => { HybeFlexService.addPublishedStream(HybeFlexService.userId + '_presentation', e); }}
           className={styles.svgStyles + ((!isFullscreen && HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
             selectedVideoCameraId) ? (' ' + styles.cursorPointer) : '')}
         >

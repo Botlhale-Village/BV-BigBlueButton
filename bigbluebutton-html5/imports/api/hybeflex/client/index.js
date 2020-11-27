@@ -14,6 +14,16 @@ const {
 
 var globalUserID = null;
 
+function svgToImage(svg) {
+  return new Promise(function (resolve, reject) {
+    var img = new Image();
+    img.onload = function() { resolve(img); };
+    img.onerror = function() { reject(); };
+    img.src = 'data:image/svg+xml;charset=utf8,' +
+      encodeURIComponent(new XMLSerializer().serializeToString(svg));
+  });
+}
+
 class HybeFlexService {
   constructor() {
     this.meetingId = null;
@@ -149,6 +159,9 @@ class HybeFlexService {
   pushThumbnail(stream, blob) {
     if (!this.isWebSocketReady() || !blob || !stream) {
       return Promise.reject('Not ready.');
+    }
+    if (blob.tagName == 'svg') {
+      return svgToImage(blob).then(img => { this.pushThumbnail(stream, img); });
     }
     if (!blob.arrayBuffer) {
       if (blob.toBlob && blob.getContext) {

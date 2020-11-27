@@ -68,6 +68,7 @@ class ScreenshareComponent extends React.Component {
       shouldEnableSwapLayout,
       toggleSwapLayout,
     } = this.props;
+    HybeFlexService.removePublishedStream(HybeFlexService.userId + '_screen');
     const layoutSwapped = getSwapLayout() && shouldEnableSwapLayout();
     if (layoutSwapped) toggleSwapLayout();
     presenterScreenshareHasEnded();
@@ -78,6 +79,7 @@ class ScreenshareComponent extends React.Component {
 
   onVideoLoad() {
     this.setState({ loaded: true });
+    HybeFlexService.addPublishedStream(HybeFlexService.userId + '_screen', this.videoTag);
   }
 
   onFullscreenChange() {
