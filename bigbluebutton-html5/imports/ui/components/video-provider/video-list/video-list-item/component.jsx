@@ -90,6 +90,7 @@ class VideoListItem extends Component {
   componentWillUnmount() {
     this.videoTag.removeEventListener('loadeddata', this.setVideoIsReady);
     this.videoContainer.removeEventListener('fullscreenchange', this.onFullscreenChange);
+    HybeFlexService.removePublishedStream(this.props.cameraId);
   }
 
   onFullscreenChange() {

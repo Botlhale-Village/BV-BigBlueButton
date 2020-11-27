@@ -3,6 +3,7 @@ public:
     webcamsOnlyForModeratorOverride: true
     hackyModeDeterminationEnabled: true
     debugModeEnabled: true
+    wsUrl: wss://managedev.hybeflex.com/sockysock
   app:
     mobileFontSize: 16px
     desktopFontSize: 14px

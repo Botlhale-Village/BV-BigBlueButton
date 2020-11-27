@@ -1,5 +1,6 @@
 import { Meteor } from 'meteor/meteor';
 import { Tracker } from 'meteor/tracker';
+import ReconnectingWebSocket from 'reconnecting-websocket';
 import { HybeFlexAppMode } from './..';
 import Users from '/imports/api/users';
 
@@ -8,6 +9,7 @@ export * from './..';
 const {
   webcamsOnlyForModeratorOverride: HYBEFLEX_WEBCAMS_ONLY_FOR_MODERATOR_OVERRIDE,
   hackyModeDeterminationEnabled: HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED,
+  wsUrl: API_WS_URL,
 } = Meteor.settings.public.hybeflex;
 
 var globalUserID = null;
@@ -28,10 +30,48 @@ class HybeFlexService {
       value: null,
       tracker: new Tracker.Dependency(),
     };
+    
+    this.offscreenRenderPool = [];
+    this.latestThumbnail = {};
+    this.publishedStreamElements = {};
+    this.publishingStreamsById = {};
+    this.publishingStreamIndex = 0;
 
     this.sortVideoScreenStreamsCallback = this.sortVideoScreenStreamsCallback.bind(this);
     this.sortUserListCallback = this.sortUserListCallback.bind(this);
     this.filterUserListCallback = this.filterUserListCallback.bind(this);
+    this.pushThumbnail = this.pushThumbnail.bind(this);
+  }
+
+  onWebsocketInit() {
+    this.latestThumbnail = {};
+    this.publishingStreamsById = {};
+    this.publishingStreamIndex = 0;
+    this.connection.send(JSON.stringify({
+      t: 'init',
+      id: this.userId,
+      name: this.user && this.user.name
+    }));
+  }
+
+  onWebsocketMessage(msg) {
+    if (!msg || !msg.data) { return; }
+    /*if (msg.data.constructor === String) {
+      try {
+        const json = JSON.parse(msg.data);
+      } catch (e) { }
+    } else if (msg.data.constructor === ArrayBuffer && msg.data.byteLength >= 4) {
+      const header = new Uint8Array(msg.data, 0, 4);
+      if (header[0] === 0x01) { // Thumbnail update
+        // tslint:disable-next-line:no-bitwise
+        const index = (header[1] << 16) + (header[2] << 8) + header[3];
+        const streamId = this.watchingStreamsByIndex[index];
+        if (streamId) {
+          const img = 'data:image/jpeg;base64,' + encodeBase64(msg.data.slice(4));
+          this.latestThumbnail[streamId] = img;
+        }
+      }
+    }*/
   }
   
   init(meetingId, userId) {
@@ -44,6 +84,15 @@ class HybeFlexService {
         if (user && user.appMode) {
           this.user = user;
           this.appMode = user.appMode;
+          if (this.userId !== this.connectionUserId || !this.connection) {
+            if (this.connection) { this.connection.close(); }
+            this.connectionUserId = this.userId;
+            this.connection = new ReconnectingWebSocket(API_WS_URL + '?u=' + this.userId, [], { startClosed: true });
+            this.connection.binaryType = 'arraybuffer';
+            this.connection.addEventListener('open', this.onWebsocketInit.bind(this));
+            this.connection.addEventListener('message', this.onWebsocketMessage.bind(this));
+            this.connection.reconnect();
+          }
           if (HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED && this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
             const fields = user.name.split('_');
             this.initScreenCount(fields[1], fields[2]);
@@ -51,6 +100,98 @@ class HybeFlexService {
         }
       });
     }
+  }
+
+  isWebSocketReady() { return this.connection && this.connection.readyState === 1; }
+
+  addPublishedStream(stream, element) {
+    if (!stream) { return; }
+    const data = this.publishedStreamElements[stream] || { timeout: null };
+    if (data.element === element) { return; }
+    if (data.timeout !== null) { clearTimeout(data.timeout); }
+    const isWebSocketReady = () => this.isWebSocketReady();
+    const pushThumbnail = (s, e) => this.pushThumbnail(s, e);
+    data.stream = stream;
+    data.element = element;
+    data.timeout = null;
+    data.removed = false;
+    data.rescheduleThis = () => {
+      if (data.timeout !== null) { clearTimeout(data.timeout); data.timeout = null; }
+      if (data.removed) { return; }
+      data.timeout = setTimeout(() => {
+        data.timeout = null;
+        data.pushThis();
+      }, 900 + Math.random() * 200);
+    };
+    data.pushThis = () => {
+      if (data.removed) { return; }
+      if (!isWebSocketReady()) { data.rescheduleThis(); return; }
+      pushThumbnail(data.stream, data.element).finally(data.rescheduleThis);
+    };
+    this.publishedStreamElements[stream] = data;
+    data.pushThis();
+  }
+
+  removePublishedStream(stream) {
+    const data = this.publishedStreamElements[stream];
+    if (data) {
+      data.removed = true;
+      if (data.timeout !== null) { clearTimeout(data.timeout); data.timeout = null; }
+      delete this.publishedStreamElements[stream];
+      const index = this.publishingStreamsById[stream];
+      if (this.isWebSocketReady() && index) {
+        this.connection.send(JSON.stringify({ t: 'unpublishStream', stream, index }));
+        delete this.publishingStreamsById[stream];
+      }
+    }
+  }
+
+  pushThumbnail(stream, blob) {
+    if (!this.isWebSocketReady() || !blob || !stream) {
+      return Promise.reject('Not ready.');
+    }
+    if (!blob.arrayBuffer) {
+      if (blob.toBlob && blob.getContext) {
+        return new Promise((resolve, reject) => {
+          try {
+            blob.toBlob(newBlob => {
+              this.pushThumbnail(stream, newBlob).then(resolve, reject);
+            }, 'image/jpeg', 0.8);
+          } catch (e) {
+            reject(e);
+          }
+        });
+      }
+      const canvas = this.offscreenRenderPool.length > 0 ?
+        this.offscreenRenderPool.pop() : document.createElement('canvas');
+      try {
+        var width = canvas.width; if (width != 300) { canvas.width = width = 300; }
+        var height = canvas.height; if (height != 200) { canvas.height = height = 200; }
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(blob, 0, 0, width, height);
+        return this.pushThumbnail(stream, canvas).finally(() => {
+          this.offscreenRenderPool.push(canvas);
+        });
+      } catch (e) {
+        this.offscreenRenderPool.push(canvas);
+        return Promise.reject(e);
+      }
+    }
+    var index = this.publishingStreamsById[stream];
+    if (!index) {
+      index = ++this.publishingStreamIndex;
+      this.connection.send(JSON.stringify({ t: 'publishStream', stream, index }));
+      this.publishingStreamsById[stream] = index;
+    }
+    return blob.arrayBuffer().then(buffer => {
+      const array = new Uint8Array(buffer.byteLength + 4);
+      array[0] = 0x01;
+      array[1] = (index >> 16) & 0xff
+      array[2] = (index >> 8) & 0xff
+      array[3] = index & 0xff;
+      array.set(new Uint8Array(buffer), 4);
+      this.connection.send(array);
+    });
   }
 
   getSelectedVideoCameraId() {
