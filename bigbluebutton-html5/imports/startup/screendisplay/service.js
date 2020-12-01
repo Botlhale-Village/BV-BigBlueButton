@@ -5,6 +5,8 @@ import Auth from '/imports/ui/services/auth';
 import logger from '/imports/startup/client/logger';
 import VideoService from '/imports/ui/components/video-provider/service';
 
+import HybeFlexService from '/imports/api/hybeflex/client';
+
 const {
   baseTimeout: CAMERA_SHARE_FAILED_WAIT_TIME = 15000,
   maxTimeout: MAX_CAMERA_SHARE_FAILED_WAIT_TIME = 60000,
@@ -43,6 +45,14 @@ export default class VideoController {
     if (this.disposed) { return; }
     const stream = this.streamInfo[index] || (this.streamInfo[index] = new VideoStreamHandler(this));
     stream.videoTag = tag;
+    stream.thumbTag = null;
+  }
+
+  setThumbTag(index, tag) {
+    if (this.disposed) { return; }
+    const stream = this.streamInfo[index] || (this.streamInfo[index] = new VideoStreamHandler(this));
+    stream.thumbTag = tag;
+    stream.videoTag = null;
   }
 
   init() {
@@ -621,9 +631,33 @@ class VideoStreamHandler {
     this.videoTag = null;
     this.cameraId = null;
     this._cameraId = null;
+    this.onThumbnailUpdate = this.onThumbnailUpdate.bind(this);
+  }
+
+  onThumbnailUpdate(src) {
+    if (this.thumbTag) {
+      this.thumbTag.src = src;
+    }
   }
 
   update() {
+    if (this.thumbTag) {
+      if (this._videoTag) { this.stop(); this._videoTag = null;}
+      if (this.cameraId !== this._cameraId || !this.thumbwatch) {
+        if (this.thumbwatch) { this.thumbwatch.remove(); this.thumbwatch = null; }
+        if (this.cameraId) {
+          this.thumbwatch = HybeFlexService.watchStreamThumbnail(this.cameraId, this.onThumbnailUpdate);
+        }
+        this._cameraId = this.cameraId;
+      }
+      return;
+    }
+
+    if (this.thumbwatch) {
+      this.thumbwatch.remove();
+      this.thumbwatch = null;
+    }
+
     const elem = this.videoTag;
     if (elem !== this._videoTag) { this.stop(); }
     this._videoTag = elem;
@@ -655,6 +689,7 @@ class VideoStreamHandler {
   }
 
   stop() {
+    if (this.thumbwatch) { this.thumbwatch.remove(); this.thumbwatch = null; }
     const elem = this._videoTag;
     if (elem) { elem.pause(); elem.srcObject = null; }
     this._cameraId = null;

@@ -28,7 +28,9 @@ class VideoListItem extends Component {
   constructor(props) {
     super(props);
     this.videoTag = null;
+    this.thumbTag = null;
     this.activeCameraId = null;
+    this.thumbwatch = null;
 
     this.state = {
       videoIsReady: false,
@@ -39,32 +41,43 @@ class VideoListItem extends Component {
 
     this.setVideoIsReady = this.setVideoIsReady.bind(this);
     this.onFullscreenChange = this.onFullscreenChange.bind(this);
+    this.onThumbnailUpdate = this.onThumbnailUpdate.bind(this);
   }
 
   componentDidMount() {
     const { onMount, webcamDraggableDispatch } = this.props;
 
-    webcamDraggableDispatch(
-      {
-        type: 'setVideoRef',
-        value: this.videoTag,
-      },
-    );
-
     this.activeCameraId = this.props.cameraId;
-    onMount(this.videoTag);
+    if (this.thumbwatch) { this.thumbwatch.remove(); this.thumbwatch = null; }
+    if (this.videoTag) {
+      webcamDraggableDispatch(
+        {
+          type: 'setVideoRef',
+          value: this.videoTag,
+        },
+      );
+      onMount(this.videoTag);
+      this.videoTag.addEventListener('loadeddata', this.setVideoIsReady);
+    } else {
+      this.thumbwatch = HybeFlexService.watchStreamThumbnail(this.activeCameraId, this.onThumbnailUpdate);
+    }
 
-    this.videoTag.addEventListener('loadeddata', this.setVideoIsReady);
     this.videoContainer.addEventListener('fullscreenchange', this.onFullscreenChange);
   }
 
   componentDidUpdate() {
-    if (this.videoTag && this.activeCameraId !== this.props.cameraId) {
-      this.activeCameraId = this.props.cameraId;
-      this.videoTag.pause();
-      this.videoTag.srcObject = null;
-      this.setState({ videoIsReady: false });
-      this.props.onMount(this.videoTag);
+    if (this.activeCameraId !== this.props.cameraId) {
+      if (this.thumbwatch) { this.thumbwatch.remove(); this.thumbwatch = null; }
+      if (this.videoTag) {
+        this.activeCameraId = this.props.cameraId;
+        this.videoTag.pause();
+        this.videoTag.srcObject = null;
+        this.setState({ videoIsReady: false });
+        this.props.onMount(this.videoTag);
+      } else {
+        this.activeCameraId = this.props.cameraId;
+        this.thumbwatch = HybeFlexService.watchStreamThumbnail(this.activeCameraId, this.onThumbnailUpdate);
+      }
     }
 
     const playElement = (elem) => {
@@ -88,9 +101,19 @@ class VideoListItem extends Component {
   }
 
   componentWillUnmount() {
-    this.videoTag.removeEventListener('loadeddata', this.setVideoIsReady);
+    if (this.thumbwatch) { this.thumbwatch.remove(); this.thumbwatch = null; }
+    if (this.videoTag) { this.videoTag.removeEventListener('loadeddata', this.setVideoIsReady); }
     this.videoContainer.removeEventListener('fullscreenchange', this.onFullscreenChange);
     HybeFlexService.removePublishedStream(this.props.cameraId);
+  }
+
+  onThumbnailUpdate(src) {
+    if (this.thumbTag) {
+      this.thumbTag.src = src;
+      if (!this.state.videoIsReady) {
+        this.setState({ videoIsReady: true });
+      }
+    }
   }
 
   onFullscreenChange() {
@@ -182,25 +205,44 @@ class VideoListItem extends Component {
           className={styles.videoContainer}
           ref={(ref) => { this.videoContainer = ref; }}
         >
-          <video
-            muted
-            className={cx({
-              [styles.media]: true,
-              [styles.cursorPointer]: !isFullscreen &&
-                HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
-                HybeFlexService.selectedVideoCameraId.value != cameraId,
-              [styles.mirroredVideo]: this.mirrorOwnWebcam,
-            })}
-            onClick={() => {
-              if (isFullscreen) { return; }
-              if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return; }
-              if (getSwapLayout()) { MediaService.toggleSwapLayout(); }
-              HybeFlexService.setSelectedVideoCameraId(cameraId);
-            }}
-            ref={(ref) => { this.videoTag = ref; }}
-            autoPlay
-            playsInline
-          />
+          { (HybeFlexService.useThumbnails && !VideoService.isLocalStream(cameraId) &&
+             HybeFlexService.selectedVideoCameraId.value != cameraId) ?
+            <img
+              className={cx({
+                [styles.media]: true,
+                [styles.cursorPointer]: !isFullscreen &&
+                  HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
+                  HybeFlexService.selectedVideoCameraId.value != cameraId,
+                [styles.mirroredVideo]: this.mirrorOwnWebcam,
+              })}
+              onClick={() => {
+                if (isFullscreen) { return; }
+                if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return; }
+                if (getSwapLayout()) { MediaService.toggleSwapLayout(); }
+                HybeFlexService.setSelectedVideoCameraId(cameraId);
+              }}
+              ref={(ref) => { this.thumbTag = ref; this.videoTag = null; }}
+            /> :
+            <video
+              muted
+              className={cx({
+                [styles.media]: true,
+                [styles.cursorPointer]: !isFullscreen &&
+                  HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
+                  HybeFlexService.selectedVideoCameraId.value != cameraId,
+                [styles.mirroredVideo]: this.mirrorOwnWebcam,
+              })}
+              onClick={() => {
+                if (isFullscreen) { return; }
+                if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return; }
+                if (getSwapLayout()) { MediaService.toggleSwapLayout(); }
+                HybeFlexService.setSelectedVideoCameraId(cameraId);
+              }}
+              ref={(ref) => { this.videoTag = ref;  this.thumbTag = null; }}
+              autoPlay
+              playsInline
+            />
+          }
           {videoIsReady && this.renderFullscreenButton()}
         </div>
         { videoIsReady

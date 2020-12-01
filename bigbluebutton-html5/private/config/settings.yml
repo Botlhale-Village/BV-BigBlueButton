@@ -4,6 +4,7 @@ public:
     hackyModeDeterminationEnabled: true
     debugModeEnabled: true
     wsUrl: wss://stress.hybeflex.com/hybeflex/sockysock
+    apiUrl: https://stress.hybeflex.com/hybeflex/api
   app:
     mobileFontSize: 16px
     desktopFontSize: 14px

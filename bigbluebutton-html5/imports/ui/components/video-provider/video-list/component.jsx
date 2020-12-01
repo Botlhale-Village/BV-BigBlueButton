@@ -19,9 +19,7 @@ const propTypes = {
   intl: PropTypes.objectOf(Object).isRequired,
   swapLayout: PropTypes.bool.isRequired,
   numberOfPages: PropTypes.number.isRequired,
-  currentVideoPageIndex: PropTypes.number.isRequired,
-  selectedVideoChildren: PropTypes.element,
-  selectedVideoCameraId: PropTypes.string,
+  currentVideoPageIndex: PropTypes.number.isRequired
 };
 
 const intlMessages = defineMessages({

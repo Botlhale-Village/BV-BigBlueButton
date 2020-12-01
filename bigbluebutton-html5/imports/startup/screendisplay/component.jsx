@@ -79,6 +79,14 @@ export class ScreenDisplay extends Component {
   }
 
   generateVideo(index) {
+    if (HybeFlexService.useThumbnails) {
+      return (
+        <img
+          style={videoStyle}
+          ref={(ref) => { this.controller.setThumbTag(index, ref); }}
+        />
+      );
+    }
     return (
       <video
         muted
@@ -92,6 +100,7 @@ export class ScreenDisplay extends Component {
 }
 
 export default withTracker((props) => {
+  HybeFlexService.appModeTracker.depend();
   HybeFlexService.buildScreenLayout(VideoService.getVideoStreams().streams);
   return {
     screenLayout: HybeFlexService.getActiveScreenLayout(),

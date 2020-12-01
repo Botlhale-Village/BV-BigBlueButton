@@ -3,6 +3,7 @@ import { Tracker } from 'meteor/tracker';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import { HybeFlexAppMode } from './..';
 import Users from '/imports/api/users';
+import { base64ArrayBuffer } from './base64';
 
 export * from './..';
 
@@ -10,6 +11,7 @@ const {
   webcamsOnlyForModeratorOverride: HYBEFLEX_WEBCAMS_ONLY_FOR_MODERATOR_OVERRIDE,
   hackyModeDeterminationEnabled: HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED,
   wsUrl: API_WS_URL,
+  apiUrl: API_HTTP_URL,
 } = Meteor.settings.public.hybeflex;
 
 var globalUserID = null;
@@ -37,35 +39,96 @@ class HybeFlexService {
     this.screenCount = 0;
     this.screenLayout = [];
 
+    this.useThumbnails = true;
+
     this.videoCameraElements = {};
     this.selectedVideoCameraId = {
       value: null,
       tracker: new Tracker.Dependency(),
     };
     
+    this.watchingStreams = {};
+    this.watchingStreamsIndexByName = {};
+    this.watchingStreamsNameByIndex = {};
+    this.watchingStreamsIndex = 0;
+
     this.offscreenRenderPool = [];
-    this.latestThumbnail = {};
     this.publishedStreamElements = {};
     this.publishingStreamsById = {};
     this.publishingStreamIndex = 0;
-
+    this.watchingStreamsSubscribed = {};
+    
     this.lastSocketSend = (new Date()).getTime();
 
     this.sortVideoScreenStreamsCallback = this.sortVideoScreenStreamsCallback.bind(this);
     this.sortUserListCallback = this.sortUserListCallback.bind(this);
     this.filterUserListCallback = this.filterUserListCallback.bind(this);
     this.pushThumbnail = this.pushThumbnail.bind(this);
+    this.watchStreamThumbnail = this.watchStreamThumbnail.bind(this);
 
     setInterval(() => {
+      if (!this.isWebSocketReady()) { return; }
+      this.updateStreamSubscriptions();
       const now = (new Date()).getTime();
-      if ((now - this.lastSocketSend) < (3 * 1000)) { return; }
-      try {
-        if (this.isWebSocketReady()) {
+      if ((now - this.lastSocketSend) >= (3 * 1000)) {
+        try {
           this.connection.send(JSON.stringify({ t: 'ping' }));
           this.lastSocketSend = now;
-        }
-      } catch (e) { }
+        } catch (e) { }
+      }
     }, 5000);
+  }
+
+  watchStreamThumbnail(stream, callback) {
+    const list = this.watchingStreams[stream] || (this.watchingStreams[stream] = []);
+    const index = this.watchingStreamsIndexByName[stream] || (this.watchingStreamsIndexByName[stream] = ++this.watchingStreamsIndex);
+    this.watchingStreamsNameByIndex[index] = stream;
+    const obj = {
+      latest: API_HTTP_URL + '/thumbnail/' + stream,
+      receive: (img) => {
+        obj.latest = img;
+        try { callback(img); }
+        catch (e) { }
+      },
+      remove: () => {
+        const idx = list.indexOf(obj);
+        if (idx >= 0) { list.splice(idx, 1); }
+        if (list.length <= 0 && this.watchingStreams[stream] === list) {
+          delete this.watchingStreams[stream];
+          this.updateStreamSubscriptions();
+        }
+      }
+    };
+    list.push(obj);
+    try { callback(obj.latest); } catch (e) { }
+    this.updateStreamSubscriptions();
+    return obj;
+  }
+
+  updateStreamSubscriptions() {
+    if (this.isWebSocketReady()) {
+      Object.keys(this.watchingStreamsSubscribed).forEach(stream => {
+        if (!this.watchingStreams[stream] || !this.watchingStreams[stream].length) {
+          try {
+            const index = this.watchingStreamsIndexByName[stream];
+            this.connection.send(JSON.stringify({ t: 'unwatchStream', stream, index }));
+            this.lastSocketSend = now;
+            delete this.watchingStreamsSubscribed[stream];
+            delete this.watchingStreams[stream];
+          } catch (e) { }
+        }
+      });
+      Object.keys(this.watchingStreams).forEach(stream => {
+        if (!this.watchingStreamsSubscribed[stream] && this.watchingStreams[stream].length) {
+          try {
+            const index = this.watchingStreamsIndexByName[stream];
+            this.connection.send(JSON.stringify({ t: 'watchStream', stream, index }));
+            this.lastSocketSend = now;
+            this.watchingStreamsSubscribed[stream] = true;
+          } catch (e) { }
+        }
+      });
+    }
   }
 
   onWebsocketInit() {
@@ -77,15 +140,16 @@ class HybeFlexService {
         this.initScreenCount(fields[1], fields[2]);
       }
     }
-    this.latestThumbnail = {};
     this.publishingStreamsById = {};
     this.publishingStreamIndex = 0;
+    this.watchingStreamsSubscribed = {};
     this.connection.send(JSON.stringify({
       t: 'init',
       id: this.userId,
       extid: this.user && this.user.extId,
       name: this.user && this.user.name,
     }));
+    this.updateStreamSubscriptions();
     this.lastSocketSend = (new Date()).getTime();
   }
 
@@ -106,11 +170,12 @@ class HybeFlexService {
       if (header[0] === 0x01) { // Thumbnail update
         // tslint:disable-next-line:no-bitwise
         const index = (header[1] << 16) + (header[2] << 8) + header[3];
-        /*const streamId = this.watchingStreamsByIndex[index];
+        const streamId = this.watchingStreamsNameByIndex[index];
         if (streamId) {
-          const img = 'data:image/jpeg;base64,' + encodeBase64(msg.data.slice(4));
-          this.latestThumbnail[streamId] = img;
-        }*/
+          const img = 'data:image/jpeg;base64,' + base64ArrayBuffer(msg.data.slice(4));
+          const list = this.watchingStreams[streamId];
+          if (list) { for (var i = list.length - 1; i >= 0; i--) { list[i].receive(img); } }
+        }
       }
     }
   }
