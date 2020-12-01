@@ -13,6 +13,7 @@ const {
 } = Meteor.settings.public.hybeflex;
 
 var globalUserID = null;
+var globalSocketUrl = API_WS_URL;
 
 function svgToImage(svg) {
   return new Promise(function (resolve, reject) {
@@ -54,34 +55,60 @@ class HybeFlexService {
   }
 
   onWebsocketInit() {
+    if (this.user && this.appMode === HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING) {
+      this.appMode = this.user.appMode;
+      if (HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED && this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
+        const fields = this.user.name.split('_');
+        this.initScreenCount(fields[1], fields[2]);
+      }
+    }
     this.latestThumbnail = {};
     this.publishingStreamsById = {};
     this.publishingStreamIndex = 0;
     this.connection.send(JSON.stringify({
       t: 'init',
       id: this.userId,
-      name: this.user && this.user.name
+      extid: this.user && this.user.extId,
+      name: this.user && this.user.name,
     }));
   }
 
   onWebsocketMessage(msg) {
     if (!msg || !msg.data) { return; }
-    /*if (msg.data.constructor === String) {
+    if (msg.data.constructor === String) {
       try {
         const json = JSON.parse(msg.data);
+        switch (json.t) {
+          case 'redirect':
+            globalSocketUrl = json.server;
+            this.connectWebSocket();
+            break;
+        }
       } catch (e) { }
     } else if (msg.data.constructor === ArrayBuffer && msg.data.byteLength >= 4) {
       const header = new Uint8Array(msg.data, 0, 4);
       if (header[0] === 0x01) { // Thumbnail update
         // tslint:disable-next-line:no-bitwise
         const index = (header[1] << 16) + (header[2] << 8) + header[3];
-        const streamId = this.watchingStreamsByIndex[index];
+        /*const streamId = this.watchingStreamsByIndex[index];
         if (streamId) {
           const img = 'data:image/jpeg;base64,' + encodeBase64(msg.data.slice(4));
           this.latestThumbnail[streamId] = img;
-        }
+        }*/
       }
-    }*/
+    }
+  }
+
+  connectWebSocket() {
+    this.appMode = HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING;
+    if (this.connection) { this.connection.close(); }
+    const id = (this.user && this.user.extId) || this.userId;
+    this.connectionUserId = this.userId;
+    this.connection = new ReconnectingWebSocket(globalSocketUrl + '?u=' + id, [], { startClosed: true });
+    this.connection.binaryType = 'arraybuffer';
+    this.connection.addEventListener('open', this.onWebsocketInit.bind(this));
+    this.connection.addEventListener('message', this.onWebsocketMessage.bind(this));
+    this.connection.reconnect();
   }
   
   init(meetingId, userId) {
@@ -93,20 +120,7 @@ class HybeFlexService {
         const user = Users.findOne({ userId: this.userId, approved: true });
         if (user && user.appMode) {
           this.user = user;
-          this.appMode = user.appMode;
-          if (this.userId !== this.connectionUserId || !this.connection) {
-            if (this.connection) { this.connection.close(); }
-            this.connectionUserId = this.userId;
-            this.connection = new ReconnectingWebSocket(API_WS_URL + '?u=' + this.userId, [], { startClosed: true });
-            this.connection.binaryType = 'arraybuffer';
-            this.connection.addEventListener('open', this.onWebsocketInit.bind(this));
-            this.connection.addEventListener('message', this.onWebsocketMessage.bind(this));
-            this.connection.reconnect();
-          }
-          if (HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED && this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
-            const fields = user.name.split('_');
-            this.initScreenCount(fields[1], fields[2]);
-          }
+          if (this.userId !== this.connectionUserId || !this.connection) { this.connectWebSocket(); }
         }
       });
     }

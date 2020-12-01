@@ -90,11 +90,22 @@ class PresentationArea extends PureComponent {
     return stateChange;
   }
 
+  updateThumbnailPublish() {
+    if (this.svggroup) {
+      if (this.props.userIsPresenter) {
+        HybeFlexService.addPublishedStream(HybeFlexService.userId + '_presentation', this.svggroup);
+      } else {
+        HybeFlexService.removePublishedStream(HybeFlexService.userId + '_presentation');
+      }
+    }
+  }
+
   componentDidMount() {
     // adding an event listener to scale the whiteboard on 'resize' events sent by chat/userlist etc
     window.addEventListener('resize', this.onResize);
     this.getInitialPresentationSizes();
     this.refPresentationContainer.addEventListener('fullscreenchange', this.onFullscreenChange);
+    this.updateThumbnailPublish();
   }
 
   componentDidUpdate(prevProps) {
@@ -132,6 +143,8 @@ class PresentationArea extends PureComponent {
         toggleSwapLayout();
       }
     }
+    
+    this.updateThumbnailPublish();
   }
 
   componentWillUnmount() {
@@ -480,12 +493,7 @@ class PresentationArea extends PureComponent {
           data-test="whiteboard"
           width={svgDimensions.width < 0 ? 0 : svgDimensions.width}
           height={svgDimensions.height < 0 ? 0 : svgDimensions.height}
-          ref={(ref) => {
-            if (ref != null) {
-              this.svggroup = ref;
-              HybeFlexService.addPublishedStream(HybeFlexService.userId + '_presentation', ref);
-            }
-          }}
+          ref={(ref) => { if (ref != null) { this.svggroup = ref; } }}
           viewBox={svgViewBox}
           version="1.1"
           xmlns="http://www.w3.org/2000/svg"
