@@ -165,6 +165,7 @@ class Base extends Component {
     const stateControls = { updateLoadingState };
     const { loading } = this.state;
     const {
+      appMode,
       codeError,
       ejected,
       meetingExist,
@@ -200,7 +201,7 @@ class Base extends Component {
       return (<MeetingEnded code={codeError} />);
     }
 
-    switch (HybeFlexService.appMode) {
+    switch (appMode) {
       case HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING: return <LoadingScreen>{loading}</LoadingScreen>;
       case HybeFlexAppMode.HYBEFLEX_APP_MODE_DEBUG: return <ControlPanel />;
       case HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN: return <ScreenDisplay />;
@@ -377,6 +378,7 @@ const BaseContainer = withTracker(() => {
 
   const codeError = Session.get('codeError');
 
+  HybeFlexService.appModeTracker.depend();
   return {
     approved,
     ejected,
@@ -393,6 +395,7 @@ const BaseContainer = withTracker(() => {
     subscriptionsReady: Session.get('subscriptionsReady'),
     loggedIn,
     codeError,
+    appMode: HybeFlexService.appMode,
   };
 })(Base);
 

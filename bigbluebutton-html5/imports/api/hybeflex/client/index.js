@@ -32,6 +32,7 @@ class HybeFlexService {
     this.user = null;
     this.speakingUser = null;
     this.appMode = HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING;
+    this.appModeTracker = new Tracker.Dependency();
     this.screenIndex = 0;
     this.screenCount = 0;
     this.screenLayout = [];
@@ -48,15 +49,29 @@ class HybeFlexService {
     this.publishingStreamsById = {};
     this.publishingStreamIndex = 0;
 
+    this.lastSocketSend = (new Date()).getTime();
+
     this.sortVideoScreenStreamsCallback = this.sortVideoScreenStreamsCallback.bind(this);
     this.sortUserListCallback = this.sortUserListCallback.bind(this);
     this.filterUserListCallback = this.filterUserListCallback.bind(this);
     this.pushThumbnail = this.pushThumbnail.bind(this);
+
+    setInterval(() => {
+      const now = (new Date()).getTime();
+      if ((now - this.lastSocketSend) < (3 * 1000)) { return; }
+      try {
+        if (this.isWebSocketReady()) {
+          this.connection.send(JSON.stringify({ t: 'ping' }));
+          this.lastSocketSend = now;
+        }
+      } catch (e) { }
+    }, 5000);
   }
 
   onWebsocketInit() {
     if (this.user && this.appMode === HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING) {
       this.appMode = this.user.appMode;
+      this.appModeTracker.changed();
       if (HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED && this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
         const fields = this.user.name.split('_');
         this.initScreenCount(fields[1], fields[2]);
@@ -71,6 +86,7 @@ class HybeFlexService {
       extid: this.user && this.user.extId,
       name: this.user && this.user.name,
     }));
+    this.lastSocketSend = (new Date()).getTime();
   }
 
   onWebsocketMessage(msg) {
@@ -101,6 +117,7 @@ class HybeFlexService {
 
   connectWebSocket() {
     this.appMode = HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING;
+    this.appModeTracker.changed();
     if (this.connection) { this.connection.close(); }
     const id = (this.user && this.user.extId) || this.userId;
     this.connectionUserId = this.userId;
@@ -166,6 +183,7 @@ class HybeFlexService {
       if (this.isWebSocketReady() && index) {
         this.connection.send(JSON.stringify({ t: 'unpublishStream', stream, index }));
         delete this.publishingStreamsById[stream];
+        this.lastSocketSend = (new Date()).getTime();
       }
     }
   }
@@ -209,6 +227,7 @@ class HybeFlexService {
       index = ++this.publishingStreamIndex;
       this.connection.send(JSON.stringify({ t: 'publishStream', stream, index }));
       this.publishingStreamsById[stream] = index;
+      this.lastSocketSend = (new Date()).getTime();
     }
     return blob.arrayBuffer().then(buffer => {
       const array = new Uint8Array(buffer.byteLength + 4);
@@ -218,6 +237,7 @@ class HybeFlexService {
       array[3] = index & 0xff;
       array.set(new Uint8Array(buffer), 4);
       this.connection.send(array);
+      this.lastSocketSend = (new Date()).getTime();
     });
   }
 
