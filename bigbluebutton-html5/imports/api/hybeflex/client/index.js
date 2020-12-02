@@ -40,6 +40,7 @@ class HybeFlexService {
     this.screenLayout = [];
 
     this.opts = { };
+    this.activeStream = null;
 
     this.videoCameraElements = {};
     this.selectedVideoCameraId = {
@@ -81,7 +82,7 @@ class HybeFlexService {
 
   initDefaultOpts(appMode) {
     this.opts = {
-      useThumbnails: 0,
+      useThumbnails: 1,
     };
     switch (appMode) {
       case HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN:
@@ -184,6 +185,10 @@ class HybeFlexService {
             }
             this.connection.send(JSON.stringify({ t: 'optVal', opts: this.opts }));
             break;
+          case 'activeStream':
+            this.activeStream = json.stream;
+            this.setSelectedVideoCameraId(this.activeStream);
+            break;
         }
       } catch (e) { }
     } else if (msg.data.constructor === ArrayBuffer && msg.data.byteLength >= 4) {
@@ -240,8 +245,24 @@ class HybeFlexService {
 
   isWebSocketReady() { return this.connection && this.connection.readyState === 1; }
 
+  getInternalTagForStream(stream) {
+    if (!stream) { return null; }
+    if (stream.length >= 13 && stream.slice(-13) == '_presentation') { return 'presentation'; }
+    if (stream.length >= 7 && stream.slice(-7) == '_screen') { return 'screenshare'; }
+    var tag = sessionStorage.getItem('tag_' + stream); if (tag) { return tag; }
+    var webcamCount = +(sessionStorage.getItem('webcamCount') || 0);
+    tag = 'webcam' + (++webcamCount);
+    sessionStorage.setItem('tag_' + stream, tag);
+    sessionStorage.setItem('webcamCount', webcamCount + '');
+    return tag;
+  }
+
   addPublishedStream(stream, element) {
     if (!stream) { return; }
+    if (this.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) {
+      const tag = this.getInternalTagForStream(stream);
+      if (tag == 'presentation' || tag == 'screenshare') { return; }
+    }
     const data = this.publishedStreamElements[stream] || { timeout: null };
     if (data.element === element) { return; }
     if (data.timeout !== null) { clearTimeout(data.timeout); }
@@ -322,6 +343,13 @@ class HybeFlexService {
       index = ++this.publishingStreamIndex;
       this.connection.send(JSON.stringify({ t: 'publishStream', stream, index }));
       this.publishingStreamsById[stream] = index;
+      if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) {
+        const tag = this.getInternalTagForStream(stream);
+        if (tag) {
+          var opts = {}; opts[tag] = stream;
+          this.connection.send(JSON.stringify({ t: 'roomStreamsSet', opts }));
+        }
+      }
       this.lastSocketSend = (new Date()).getTime();
     }
     return blob.arrayBuffer().then(buffer => {
@@ -472,6 +500,11 @@ class HybeFlexService {
         if (streamIndex >= streams.length) { layout.streams[j].stream = null; }
         else { layout.streams[j].stream = streams[streamIndex++]; }
       }
+    }
+    if (this.opts.maxStreamsBeforeThumbnailUse === 0) { this.opts.useThumbnails = 1; }
+    else if (this.opts.maxStreamsBeforeThumbnailUse) {
+      var thisScreen = this.getActiveScreenLayout();
+      this.opts.useThumbnails = (thisScreen.streams.length > this.opts.maxStreamsBeforeThumbnailUse) ? 1 : 0;
     }
   }
 
