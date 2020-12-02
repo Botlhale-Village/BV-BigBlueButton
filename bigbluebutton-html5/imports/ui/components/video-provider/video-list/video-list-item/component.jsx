@@ -205,7 +205,7 @@ class VideoListItem extends Component {
           className={styles.videoContainer}
           ref={(ref) => { this.videoContainer = ref; }}
         >
-          { (HybeFlexService.useThumbnails && !VideoService.isLocalStream(cameraId) &&
+          { (HybeFlexService.isUsingThumbnails() && !VideoService.isLocalStream(cameraId) &&
              HybeFlexService.selectedVideoCameraId.value != cameraId) ?
             <img
               className={cx({

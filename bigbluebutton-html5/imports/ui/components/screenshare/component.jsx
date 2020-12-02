@@ -54,7 +54,7 @@ class ScreenshareComponent extends React.Component {
     this.screenshareContainer.addEventListener('fullscreenchange', this.onFullscreenChange);
     window.addEventListener('screensharePlayFailed', this.handlePlayElementFailed);
     
-    if (!this.props.isPresenter && HybeFlexService.useThumbnails && this.props.selectedVideoCameraId) {
+    if (!this.props.isPresenter && HybeFlexService.isUsingThumbnails() && this.props.selectedVideoCameraId) {
       this.thumbwatch = HybeFlexService.watchStreamThumbnail(this.screenshareStreamId, this.onThumbnailUpdate);
       this.setState({ loaded: true });
     }
@@ -203,7 +203,7 @@ class ScreenshareComponent extends React.Component {
           ref={(ref) => { this.screenshareContainer = ref; }}
         >
           {loaded && this.renderFullscreenButton()}
-          { (!isPresenter && HybeFlexService.useThumbnails && selectedVideoCameraId) ?
+          { (!isPresenter && HybeFlexService.isUsingThumbnails() && selectedVideoCameraId) ?
             <img
               style={{ maxHeight: '100%', width: '100%', height: '100%' }}
               ref={(ref) => { this.thumbTag = ref; this.videoTag = null; }}

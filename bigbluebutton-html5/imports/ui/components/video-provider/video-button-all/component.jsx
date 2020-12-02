@@ -9,11 +9,11 @@ import { validIOSVersion } from '/imports/ui/components/app/service';
 
 const intlMessages = defineMessages({
   joinVideo: {
-    id: 'app.video.joinVideo',
+    id: 'app.video.joinVideoAll',
     description: 'Join video button label',
   },
   leaveVideo: {
-    id: 'app.video.leaveVideo',
+    id: 'app.video.leaveVideoAll',
     description: 'Leave video button label',
   },
   videoLocked: {
@@ -81,7 +81,8 @@ const JoinVideoAllButton = ({
       onClick={handleOnClick}
       hideLabel
       color={hasVideoStream ? 'primary' : 'default'}
-      icon={hasVideoStream ? 'images' : 'video-slash'}
+      customIcon={hasVideoStream ? <div><i class="la la-video"></i><br></br><i class="la la-video"></i><i class="la la-video"></i></div> : <div><i class="la la-video-slash"></i><br></br><i class="la la-video-slash"></i><i class="la la-video-slash"></i></div>}
+      // icon={hasVideoStream ? 'images' : 'video-slash'}
       ghost={!hasVideoStream}
       size="lg"
       circle

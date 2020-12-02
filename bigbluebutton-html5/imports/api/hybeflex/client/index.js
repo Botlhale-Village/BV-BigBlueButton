@@ -39,7 +39,7 @@ class HybeFlexService {
     this.screenCount = 0;
     this.screenLayout = [];
 
-    this.useThumbnails = true;
+    this.opts = { };
 
     this.videoCameraElements = {};
     this.selectedVideoCameraId = {
@@ -77,6 +77,19 @@ class HybeFlexService {
         } catch (e) { }
       }
     }, 5000);
+  }
+
+  initDefaultOpts(appMode) {
+    this.opts = {
+      useThumbnails: 0,
+    };
+    switch (appMode) {
+      case HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN:
+        this.opts.maxStreamsBeforeThumbnailUse = 4;
+        this.opts.screenIndex = 0;
+        this.opts.screenCount = 1;
+        break;
+    }
   }
 
   watchStreamThumbnail(stream, callback) {
@@ -144,6 +157,7 @@ class HybeFlexService {
       id: this.userId,
       extid: this.user && this.user.extId,
       name: this.user && this.user.name,
+      opts: this.opts,
     }));
     this.updateStreamSubscriptions();
     this.lastSocketSend = (new Date()).getTime();
@@ -158,6 +172,17 @@ class HybeFlexService {
           case 'redirect':
             globalSocketUrl = json.server;
             this.connectWebSocket();
+            break;
+          case 'optSet':
+            if (json.opts) {
+              Object.keys(json.opts).forEach(key => { this.opts[key] = json.opts[key]; });
+              if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN &&
+                  (this.opts.screenIndex || this.opts.screenCount)) {
+                this.initScreenCount(this.opts.screenIndex, this.opts.screenCount);
+              }
+              this.appModeTracker.changed();
+            }
+            this.connection.send(JSON.stringify({ t: 'optVal', opts: this.opts }));
             break;
         }
       } catch (e) { }
@@ -198,15 +223,20 @@ class HybeFlexService {
         const user = Users.findOne({ userId: this.userId, approved: true });
         if (user && user.appMode) {
           this.user = user;
+          this.initDefaultOpts(user.appMode);
           if (this.userId !== this.connectionUserId || !this.connection) { this.connectWebSocket(); }
           if (HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED && user.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
             const fields = user.name.split('_');
-            this.initScreenCount(fields[1], fields[2]);
+            this.opts.screenIndex = (+fields[1]) - 1;
+            this.opts.screenCount = +fields[2];
+            this.initScreenCount(this.opts.screenIndex, this.opts.screenCount);
           }
         }
       });
     }
   }
+
+  isUsingThumbnails() { return !!this.opts.useThumbnails; }
 
   isWebSocketReady() { return this.connection && this.connection.readyState === 1; }
 

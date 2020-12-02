@@ -79,7 +79,7 @@ export class ScreenDisplay extends Component {
   }
 
   generateVideo(index) {
-    if (HybeFlexService.useThumbnails) {
+    if (HybeFlexService.isUsingThumbnails()) {
       return (
         <img
           style={videoStyle}
