@@ -135,10 +135,6 @@ class HybeFlexService {
     if (this.user && this.appMode === HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING) {
       this.appMode = this.user.appMode;
       this.appModeTracker.changed();
-      if (HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED && this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
-        const fields = this.user.name.split('_');
-        this.initScreenCount(fields[1], fields[2]);
-      }
     }
     this.publishingStreamsById = {};
     this.publishingStreamIndex = 0;
@@ -203,6 +199,10 @@ class HybeFlexService {
         if (user && user.appMode) {
           this.user = user;
           if (this.userId !== this.connectionUserId || !this.connection) { this.connectWebSocket(); }
+          if (HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED && user.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
+            const fields = user.name.split('_');
+            this.initScreenCount(fields[1], fields[2]);
+          }
         }
       });
     }
@@ -446,7 +446,8 @@ class HybeFlexService {
   }
 
   getActiveScreenLayout() {
-    return this.screenLayout[this.screenIndex];
+    return this.screenLayout[this.screenIndex] ||
+      (this.screenLayout[this.screenIndex] = { screenIndex: this.screenIndex, streams: [] });
   }
 }
 

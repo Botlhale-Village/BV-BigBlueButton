@@ -43,7 +43,7 @@ export class ScreenDisplay extends Component {
   componentDidMount() {
     this.controller.init();
   }
-
+  
   componentDidUpdate() {
     this.controller.update();
   }
@@ -57,7 +57,6 @@ export class ScreenDisplay extends Component {
   }
 
   generateGrid(layout) {
-    if (!layout) { return null; }
     const list = [];
     const height = `${100.0 / layout.rows}%`;
     const style = { ...rowStyle, height };

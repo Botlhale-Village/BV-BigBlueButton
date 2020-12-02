@@ -61,7 +61,7 @@ export default class VideoController {
   }
 
   update() {
-    if (this.disposed || !this.screenLayout) { return; }
+    if (this.disposed) { return; }
     const layoutStreams = this.screenLayout.streams;
     const cameraIds = {};
     for (var i = 0; i < layoutStreams.length; i++) {
