@@ -10,22 +10,61 @@ export * from './..';
 const {
   webcamsOnlyForModeratorOverride: HYBEFLEX_WEBCAMS_ONLY_FOR_MODERATOR_OVERRIDE,
   hackyModeDeterminationEnabled: HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED,
-  wsUrl: API_WS_URL,
-  apiUrl: API_HTTP_URL,
 } = Meteor.settings.public.hybeflex;
 
-var globalUserID = null;
-var globalSocketUrl = API_WS_URL;
+const MAX_THUMB_DIM = 300;
 
-function svgToImage(svg) {
-  return new Promise(function (resolve, reject) {
-    var img = new Image();
-    img.onload = function() { resolve(img); };
-    img.onerror = function() { reject(); };
-    img.src = 'data:image/svg+xml;charset=utf8,' +
-      encodeURIComponent(new XMLSerializer().serializeToString(svg));
-  });
-}
+const currentDomainName = window.location.host;
+export const HybeflexSocketUrl = 'wss://' + currentDomainName + '/hybeflex/sockysock';
+export const HybeflexAPIUrl = 'https://' + currentDomainName + '/hybeflex/api';
+export const WebRTCSFU = 'wss://' + currentDomainName + '/bbb-webrtc-sfu';
+
+var globalUserID = null;
+var globalSocketUrl = HybeflexSocketUrl;
+
+var svgToImage = (function () {
+  var lastSvgImageTag = new Image();
+  var lastSvgImageBackTag = new Image();
+  var lastSvgImageBackSrc = '';
+
+  function loadImage(img, src) {
+    if (img.src == src) { return Promise.resolve(img); }
+    return new Promise(function (resolve, reject) {
+      img.onload = function () { resolve(img); };
+      img.onerror = function (e) { reject(e); };
+      img.src = src;
+    });
+  }
+
+  return function (svg) {
+    var svgText = new XMLSerializer().serializeToString(svg);
+
+    // Strip out background image
+    var i = svgText.indexOf('<image ');
+    if (i >= 0) {
+      var j = svgText.indexOf('/>', i + 7);
+      var imageTag = svgText.slice(i, j + 2);
+      svgText = svgText.slice(0, i) + svgText.slice(j + 2);
+      i = imageTag.indexOf('href="');
+      if (i >= 0) {
+        i += 6; j = imageTag.indexOf('"', i);
+        lastSvgImageBackSrc = imageTag.slice(i, j);
+      }
+    }
+
+    // Strip out white rectangle
+    i = svgText.indexOf('<g><g><rect x="0" y="0"');
+    if (i >= 0) {
+      var j = svgText.indexOf('/></g></g>', i + 23);
+      svgText = svgText.slice(0, i) + svgText.slice(j + 10);
+    }
+
+    return Promise.all([
+      loadImage(lastSvgImageBackTag, lastSvgImageBackSrc),
+      loadImage(lastSvgImageTag, 'data:image/svg+xml;charset=utf8,' + encodeURIComponent(svgText)),
+    ]);
+  };
+})();
 
 class HybeFlexService {
   constructor() {
@@ -86,7 +125,7 @@ class HybeFlexService {
     };
     switch (appMode) {
       case HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN:
-        this.opts.maxStreamsBeforeThumbnailUse = 4;
+        this.opts.maxStreamsBeforeThumbnails = 4;
         this.opts.screenIndex = 0;
         this.opts.screenCount = 1;
         break;
@@ -98,7 +137,7 @@ class HybeFlexService {
     const index = this.watchingStreamsIndexByName[stream] || (this.watchingStreamsIndexByName[stream] = ++this.watchingStreamsIndex);
     this.watchingStreamsNameByIndex[index] = stream;
     const obj = {
-      latest: API_HTTP_URL + '/thumbnail/' + stream,
+      latest: HybeflexAPIUrl + '/thumbnail/' + stream,
       receive: (img) => {
         obj.latest = img;
         try { callback(img); }
@@ -323,13 +362,36 @@ class HybeFlexService {
           }
         });
       }
-      const canvas = this.offscreenRenderPool.length > 0 ?
-        this.offscreenRenderPool.pop() : document.createElement('canvas');
+      const element = (blob.constructor == Array) ? blob[0] : blob;
+      var width = element.width || 300;
+      var height = element.height || 200;
+      if (width > MAX_THUMB_DIM) { height = Math.floor((height * MAX_THUMB_DIM / width) + 0.5); width = MAX_THUMB_DIM; }
+      if (height > MAX_THUMB_DIM) { width = Math.floor((width * MAX_THUMB_DIM / height) + 0.5); height = MAX_THUMB_DIM; }
+      var canvas = null;
+      for (var i = 0; i < this.offscreenRenderPool.length; i++) {
+        if (this.offscreenRenderPool[i].width == width && this.offscreenRenderPool[i].height == height) {
+          canvas = this.offscreenRenderPool[i];
+          this.offscreenRenderPool[i] = this.offscreenRenderPool[this.offscreenRenderPool.length - 1];
+          this.offscreenRenderPool.pop();
+          break;
+        }
+      }
+      if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+      }
       try {
-        var width = canvas.width; if (width != 300) { canvas.width = width = 300; }
-        var height = canvas.height; if (height != 200) { canvas.height = height = 200; }
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(blob, 0, 0, width, height);
+        if (blob.constructor == Array) {
+          for (var i = 0; i < blob.length; i++) {
+            if (!blob[i].width || !blob[i].height) { ctx.drawImage(blob[i], 0, 0, width, height); }
+            else { ctx.drawImage(blob[i], 0, 0, blob[i].width, blob[i].height, 0, 0, width, height); }
+          }
+        } else {
+          if (!blob.width || !blob.height) { ctx.drawImage(blob, 0, 0, width, height); }
+          else { ctx.drawImage(blob, 0, 0, blob.width, blob.height, 0, 0, width, height); }
+        }
         return this.pushThumbnail(stream, canvas).finally(() => {
           this.offscreenRenderPool.push(canvas);
         });
@@ -501,10 +563,10 @@ class HybeFlexService {
         else { layout.streams[j].stream = streams[streamIndex++]; }
       }
     }
-    if (this.opts.maxStreamsBeforeThumbnailUse === 0) { this.opts.useThumbnails = 1; }
-    else if (this.opts.maxStreamsBeforeThumbnailUse) {
+    if (this.opts.maxStreamsBeforeThumbnails === 0) { this.opts.useThumbnails = 1; }
+    else if (this.opts.maxStreamsBeforeThumbnails) {
       var thisScreen = this.getActiveScreenLayout();
-      this.opts.useThumbnails = (thisScreen.streams.length > this.opts.maxStreamsBeforeThumbnailUse) ? 1 : 0;
+      this.opts.useThumbnails = (thisScreen.streams.length > this.opts.maxStreamsBeforeThumbnails) ? 1 : 0;
     }
   }
 

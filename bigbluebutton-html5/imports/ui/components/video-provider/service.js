@@ -14,13 +14,12 @@ import getFromUserSettings from '/imports/ui/services/users-settings';
 import logger from '/imports/startup/client/logger';
 import _ from 'lodash';
 
-import HybeFlexService, { HybeFlexAppMode } from '/imports/api/hybeflex/client';
+import HybeFlexService, { HybeFlexAppMode, WebRTCSFU as SFU_URL } from '/imports/api/hybeflex/client';
 
 const CAMERA_PROFILES = Meteor.settings.public.kurento.cameraProfiles;
 const MULTIPLE_CAMERAS = Meteor.settings.public.app.enableMultipleCameras;
 const SKIP_VIDEO_PREVIEW = Meteor.settings.public.kurento.skipVideoPreview;
 
-const SFU_URL = Meteor.settings.public.kurento.wsUrl;
 const ROLE_MODERATOR = Meteor.settings.public.user.role_moderator;
 const ROLE_VIEWER = Meteor.settings.public.user.role_viewer;
 const ENABLE_NETWORK_MONITORING = Meteor.settings.public.networkMonitoring.enableNetworkMonitoring;

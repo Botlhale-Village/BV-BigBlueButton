@@ -3,8 +3,6 @@ public:
     webcamsOnlyForModeratorOverride: true
     hackyModeDeterminationEnabled: true
     debugModeEnabled: true
-    wsUrl: wss://bbb.belgiumcampus.ac.za/hybeflex/sockysock
-    apiUrl: https://bbb.belgiumcampus.ac.za/hybeflex/api
   app:
     mobileFontSize: 16px
     desktopFontSize: 14px
@@ -13,10 +11,10 @@ public:
     listenOnlyMode: true
     forceListenOnly: false
     skipCheck: false
-    clientTitle: BigBlueButton
-    appName: BigBlueButton HTML5 Client
+    clientTitle: HybeFlex
+    appName: HybeFlex HTML5 Client
     bbbServerVersion: 2.2
-    copyright: "©2020 BigBlueButton Inc."
+    copyright: "©2020 HybeFlex Inc."
     html5ClientBuild: HTML5_CLIENT_VERSION
     helpLink: https://bigbluebutton.org/html5/
     lockOnJoin: true
@@ -99,7 +97,6 @@ public:
     enableNetworkMonitoring: false
     packetLostThreshold: 10
   kurento:
-    wsUrl: wss://bbb.belgiumcampus.ac.za/bbb-webrtc-sfu
     # Valid for video-provider. Time (ms) before its WS connection times out
     # and tries to reconnect.
     wsConnectionTimeout: 4000
