@@ -530,7 +530,9 @@ class HybeFlexService {
         return false;
       });
     }
-    if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) {
+    if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT ||
+        this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER ||
+        this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_INTERPRETER) {
       // View local streams + speaking student + lecturer + interpreter streams
       this.populateStreamAppMode(streams);
       streams = streams.filter((stream) => {
@@ -538,15 +540,6 @@ class HybeFlexService {
         if (stream.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return true; }
         if (stream.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_AUTOVIDEO) { return true; }
         if (stream.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_INTERPRETER) { return true; }
-        if (this.speakingUser && stream.userId == this.speakingUser.userId) { return true; }
-        return false;
-      });
-    }
-    if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER ||
-        this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_INTERPRETER) {
-      // View local streams + speaking student
-      streams = streams.filter((stream) => {
-        if (stream.userId == this.user.userId) { return true; }
         if (this.speakingUser && stream.userId == this.speakingUser.userId) { return true; }
         return false;
       });
