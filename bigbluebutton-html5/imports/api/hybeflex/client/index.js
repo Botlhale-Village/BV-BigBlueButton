@@ -80,6 +80,8 @@ class HybeFlexService {
 
     this.opts = { };
     this.activeStream = null;
+    this.roomStreamsByTag = {};
+    this.roomStreamsById = {};
 
     this.videoCameraElements = {};
     this.selectedVideoCameraId = {
@@ -92,10 +94,13 @@ class HybeFlexService {
     this.watchingStreamsNameByIndex = {};
     this.watchingStreamsIndex = 0;
 
+    this.publishingStreams = {};
+    this.publishingStreamsIndexByName = {};
+    this.publishingStreamsNameByIndex = {};
+    this.publishingStreamsIndex = 0;
+
     this.offscreenRenderPool = [];
-    this.publishedStreamElements = {};
-    this.publishingStreamsById = {};
-    this.publishingStreamIndex = 0;
+    this.publishedStreamSubscribed = {};
     this.watchingStreamsSubscribed = {};
     
     this.lastSocketSend = (new Date()).getTime();
@@ -103,8 +108,8 @@ class HybeFlexService {
     this.sortVideoScreenStreamsCallback = this.sortVideoScreenStreamsCallback.bind(this);
     this.sortUserListCallback = this.sortUserListCallback.bind(this);
     this.filterUserListCallback = this.filterUserListCallback.bind(this);
-    this.pushThumbnail = this.pushThumbnail.bind(this);
     this.watchStreamThumbnail = this.watchStreamThumbnail.bind(this);
+    this.addPublishedStream = this.addPublishedStream.bind(this);
 
     setInterval(() => {
       if (!this.isWebSocketReady()) { return; }
@@ -119,22 +124,59 @@ class HybeFlexService {
     }, 5000);
   }
 
+  isUsingThumbnails() { return !!this.opts.useThumbnails; }
+
+  isWebSocketReady() { return this.connection && this.connection.readyState === 1; }
+
+  getWebcamsOnlyForModeratorOverride() {
+    if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) { return true; }
+    return HYBEFLEX_WEBCAMS_ONLY_FOR_MODERATOR_OVERRIDE;
+  }
+
+  isMultipleCamerasEnabled() {
+    return this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER;
+  }
+
+  canUnmute() {
+    if (this.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return true; }
+    return !!(this.speakingUser && this.speakingUser.userId == this.userId);
+  }
+
+  isWebcamStream(stream) {
+    if (!stream) { return false; }
+    if (stream == 'presentation' || stream == 'screenshare') { return false; }
+    if (stream.length >= 13 && stream.slice(0, 13) == 'presentation_') { return false; }
+    if (stream.length >= 12 && stream.slice(0, 12) == 'screenshare_') { return false; }
+    return true;
+  }
+
+  getFromUserSettings(setting, defaultValue) {
+    const value = this.opts[setting];
+    if (value !== undefined) { return value; }
+    return defaultValue;
+  }
+
   initDefaultOpts(appMode) {
     this.opts = {
       useThumbnails: 1,
+      bbb_skip_check_audio: 1,
+      bbb_listen_only_mode: 0,
+      bbb_force_listen_only: 0,
     };
     switch (appMode) {
       case HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN:
         this.opts.maxStreamsBeforeThumbnails = 4;
         this.opts.screenIndex = 0;
-        this.opts.screenCount = 1;
+        this.opts.screens = [{ screenIndex: 0 }];
         break;
     }
   }
 
   watchStreamThumbnail(stream, callback) {
+    stream = this.getStreamIdForStream(stream);
     const list = this.watchingStreams[stream] || (this.watchingStreams[stream] = []);
-    const index = this.watchingStreamsIndexByName[stream] || (this.watchingStreamsIndexByName[stream] = ++this.watchingStreamsIndex);
+    const index = this.watchingStreamsIndexByName[stream] ||
+      (this.watchingStreamsIndexByName[stream] = ++this.watchingStreamsIndex);
     this.watchingStreamsNameByIndex[index] = stream;
     const obj = {
       latest: HybeflexAPIUrl + '/thumbnail/' + stream,
@@ -158,8 +200,53 @@ class HybeFlexService {
     return obj;
   }
 
+  addPublishedStream(stream, element) {
+    if (this.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) {
+      if (stream == 'presentation' || stream == 'screenshare') { return; }
+    }
+    stream = this.getStreamIdForStream(stream);
+    const list = this.publishingStreams[stream] || (this.publishingStreams[stream] = []);
+    const index = this.publishingStreamsIndexByName[stream] ||
+      (this.publishingStreamsIndexByName[stream] = ++this.publishingStreamsIndex);
+    this.publishingStreamsNameByIndex[index] = stream;
+    const obj = {
+      element: element,
+      timeout: null,
+      reschedulePush: () => {
+        if (obj.timeout !== null) { clearTimeout(obj.timeout); obj.timeout = null; }
+        if (obj.removed) { return; }
+        obj.timeout = setTimeout(() => {
+          obj.timeout = null;
+          obj.pushThumbnail();
+        }, 900 + Math.random() * 200);
+      },
+      pushThumbnail: () => {
+        if (obj.removed) { return; }
+        if (!this.isWebSocketReady()) { obj.reschedulePush(); return; }
+        if (!this.publishedStreamSubscribed[stream]) { this.updateStreamSubscriptions(); }
+        this.pushThumbnail(index, obj.element).finally(obj.reschedulePush);
+      },
+      remove: () => {
+        obj.removed = true;
+        if (obj.timeout !== null) { clearTimeout(obj.timeout); obj.timeout = null; }
+        const idx = list.indexOf(obj);
+        if (idx >= 0) { list.splice(idx, 1); }
+        if (list.length <= 0 && this.publishingStreams[stream] === list) {
+          delete this.publishingStreams[stream];
+          this.updateStreamSubscriptions();
+        }
+      }
+    };
+    list.push(obj);
+    this.updateStreamSubscriptions();
+    obj.pushThumbnail();
+    return obj;
+  }
+
   updateStreamSubscriptions() {
     if (this.isWebSocketReady()) {
+      const now = (new Date()).getTime();
+
       Object.keys(this.watchingStreamsSubscribed).forEach(stream => {
         if (!this.watchingStreams[stream] || !this.watchingStreams[stream].length) {
           try {
@@ -171,6 +258,7 @@ class HybeFlexService {
           } catch (e) { }
         }
       });
+
       Object.keys(this.watchingStreams).forEach(stream => {
         if (!this.watchingStreamsSubscribed[stream] && this.watchingStreams[stream].length) {
           try {
@@ -181,7 +269,58 @@ class HybeFlexService {
           } catch (e) { }
         }
       });
+
+      Object.keys(this.publishedStreamSubscribed).forEach(stream => {
+        if (!this.publishingStreams[stream] || !this.publishingStreams[stream].length) {
+          try {
+            const index = this.publishingStreamsIndexByName[stream];
+            this.connection.send(JSON.stringify({ t: 'unpublishStream', stream, index }));
+            this.lastSocketSend = now;
+            delete this.publishedStreamSubscribed[stream];
+            delete this.publishingStreams[stream];
+          } catch (e) { }
+        }
+      });
+
+      Object.keys(this.publishingStreams).forEach(stream => {
+        if (!this.publishedStreamSubscribed[stream] && this.publishingStreams[stream].length) {
+          try {
+            const index = this.publishingStreamsIndexByName[stream];
+            this.connection.send(JSON.stringify({ t: 'publishStream', stream, index }));
+            this.lastSocketSend = now;
+            this.publishedStreamSubscribed[stream] = true;
+            if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER ||
+                this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_AUTOVIDEO) {
+              const tag = this.getInternalTagForStream(stream);
+              if (tag) {
+                var opts = {}; opts[tag] = stream;
+                this.connection.send(JSON.stringify({ t: 'roomStreamsSet', opts }));
+              }
+            }
+          } catch (e) { }
+        }
+      });
+
     }
+  }
+
+  getStreamIdForStream(stream) {
+    if (!stream) { return null; }
+    if (stream != 'presentation' && stream != 'screenshare') { return stream; }
+    return stream + '_' + this.meetingId;
+  }
+
+  getInternalTagForStream(stream) {
+    if (!stream) { return null; }
+    if (stream == 'presentation' || stream == 'screenshare') { return stream; }
+    if (stream.length >= 13 && stream.slice(0, 13) == 'presentation_') { return 'presentation'; }
+    if (stream.length >= 12 && stream.slice(0, 12) == 'screenshare_') { return 'screenshare'; }
+    var tag = this.roomStreamsById[stream]; if (tag) { return tag; }
+    var webcamCount = 0;
+    do { tag = 'webcam' + (++webcamCount); } while (this.roomStreamsByTag[tag]);
+    this.roomStreamsById[stream] = tag;
+    this.roomStreamsByTag[tag] = stream;
+    return tag;
   }
 
   onWebsocketInit() {
@@ -189,9 +328,8 @@ class HybeFlexService {
       this.appMode = this.user.appMode;
       this.appModeTracker.changed();
     }
-    this.publishingStreamsById = {};
-    this.publishingStreamIndex = 0;
     this.watchingStreamsSubscribed = {};
+    this.publishedStreamSubscribed = {};
     this.connection.send(JSON.stringify({
       t: 'init',
       id: this.userId,
@@ -216,13 +354,19 @@ class HybeFlexService {
           case 'optSet':
             if (json.opts) {
               Object.keys(json.opts).forEach(key => { this.opts[key] = json.opts[key]; });
-              if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN &&
-                  (this.opts.screenIndex || this.opts.screenCount)) {
-                this.initScreenCount(this.opts.screenIndex, this.opts.screenCount);
+              if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN && (this.opts.screenIndex || this.opts.screens)) {
+                this.initScreenCount(this.opts.screenIndex, (this.opts.screens && this.opts.screens.length) || 1);
               }
               this.appModeTracker.changed();
             }
             this.connection.send(JSON.stringify({ t: 'optVal', opts: this.opts }));
+            break;
+          case 'roomStreams':
+            if (json.opts) {
+              this.roomStreamsByTag = json.opts;
+              this.roomStreamsById = {};
+              Object.keys(json.opts).forEach(key => { this.roomStreamsById[json.opts[key]] = key; });
+            }
             break;
           case 'activeStream':
             this.activeStream = json.stream;
@@ -271,91 +415,26 @@ class HybeFlexService {
           if (this.userId !== this.connectionUserId || !this.connection) { this.connectWebSocket(); }
           if (HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED && user.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
             const fields = user.name.split('_');
-            this.opts.screenIndex = (+fields[1]) - 1;
-            this.opts.screenCount = +fields[2];
-            this.initScreenCount(this.opts.screenIndex, this.opts.screenCount);
+            if (fields.length >= 3) { this.initScreenCount(this.opts.screenIndex = (+fields[1]) - 1, +(fields[2] || 1)); }
           }
         }
       });
     }
   }
 
-  isUsingThumbnails() { return !!this.opts.useThumbnails; }
-
-  isWebSocketReady() { return this.connection && this.connection.readyState === 1; }
-
-  getInternalTagForStream(stream) {
-    if (!stream) { return null; }
-    if (stream.length >= 13 && stream.slice(-13) == '_presentation') { return 'presentation'; }
-    if (stream.length >= 7 && stream.slice(-7) == '_screen') { return 'screenshare'; }
-    var tag = sessionStorage.getItem('tag_' + stream); if (tag) { return tag; }
-    var webcamCount = +(sessionStorage.getItem('webcamCount') || 0);
-    tag = 'webcam' + (++webcamCount);
-    sessionStorage.setItem('tag_' + stream, tag);
-    sessionStorage.setItem('webcamCount', webcamCount + '');
-    return tag;
-  }
-
-  addPublishedStream(stream, element) {
-    if (!stream) { return; }
-    if (this.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) {
-      const tag = this.getInternalTagForStream(stream);
-      if (tag == 'presentation' || tag == 'screenshare') { return; }
-    }
-    const data = this.publishedStreamElements[stream] || { timeout: null };
-    if (data.element === element) { return; }
-    if (data.timeout !== null) { clearTimeout(data.timeout); }
-    const isWebSocketReady = () => this.isWebSocketReady();
-    const pushThumbnail = (s, e) => this.pushThumbnail(s, e);
-    data.stream = stream;
-    data.element = element;
-    data.timeout = null;
-    data.removed = false;
-    data.rescheduleThis = () => {
-      if (data.timeout !== null) { clearTimeout(data.timeout); data.timeout = null; }
-      if (data.removed) { return; }
-      data.timeout = setTimeout(() => {
-        data.timeout = null;
-        data.pushThis();
-      }, 900 + Math.random() * 200);
-    };
-    data.pushThis = () => {
-      if (data.removed) { return; }
-      if (!isWebSocketReady()) { data.rescheduleThis(); return; }
-      pushThumbnail(data.stream, data.element).finally(data.rescheduleThis);
-    };
-    this.publishedStreamElements[stream] = data;
-    data.pushThis();
-  }
-
-  removePublishedStream(stream) {
-    const data = this.publishedStreamElements[stream];
-    if (data) {
-      data.removed = true;
-      if (data.timeout !== null) { clearTimeout(data.timeout); data.timeout = null; }
-      delete this.publishedStreamElements[stream];
-      const index = this.publishingStreamsById[stream];
-      if (this.isWebSocketReady() && index) {
-        this.connection.send(JSON.stringify({ t: 'unpublishStream', stream, index }));
-        delete this.publishingStreamsById[stream];
-        this.lastSocketSend = (new Date()).getTime();
-      }
-    }
-  }
-
-  pushThumbnail(stream, blob) {
-    if (!this.isWebSocketReady() || !blob || !stream) {
+  pushThumbnail(index, blob) {
+    if (!this.isWebSocketReady() || !blob) {
       return Promise.reject('Not ready.');
     }
     if (blob.tagName == 'svg') {
-      return svgToImage(blob).then(img => { this.pushThumbnail(stream, img); });
+      return svgToImage(blob).then(img => { this.pushThumbnail(index, img); });
     }
     if (!blob.arrayBuffer) {
       if (blob.toBlob && blob.getContext) {
         return new Promise((resolve, reject) => {
           try {
             blob.toBlob(newBlob => {
-              this.pushThumbnail(stream, newBlob).then(resolve, reject);
+              this.pushThumbnail(index, newBlob).then(resolve, reject);
             }, 'image/jpeg', 0.8);
           } catch (e) {
             reject(e);
@@ -392,27 +471,13 @@ class HybeFlexService {
           if (!blob.width || !blob.height) { ctx.drawImage(blob, 0, 0, width, height); }
           else { ctx.drawImage(blob, 0, 0, blob.width, blob.height, 0, 0, width, height); }
         }
-        return this.pushThumbnail(stream, canvas).finally(() => {
+        return this.pushThumbnail(index, canvas).finally(() => {
           this.offscreenRenderPool.push(canvas);
         });
       } catch (e) {
         this.offscreenRenderPool.push(canvas);
         return Promise.reject(e);
       }
-    }
-    var index = this.publishingStreamsById[stream];
-    if (!index) {
-      index = ++this.publishingStreamIndex;
-      this.connection.send(JSON.stringify({ t: 'publishStream', stream, index }));
-      this.publishingStreamsById[stream] = index;
-      if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) {
-        const tag = this.getInternalTagForStream(stream);
-        if (tag) {
-          var opts = {}; opts[tag] = stream;
-          this.connection.send(JSON.stringify({ t: 'roomStreamsSet', opts }));
-        }
-      }
-      this.lastSocketSend = (new Date()).getTime();
     }
     return blob.arrayBuffer().then(buffer => {
       const array = new Uint8Array(buffer.byteLength + 4);
@@ -432,23 +497,20 @@ class HybeFlexService {
   }
 
   setSelectedVideoCameraId(cameraId) {
+    if (cameraId) {
+      if (cameraId.length >= 13 && cameraId.slice(0, 13) == 'presentation_') { cameraId = 'presentation'; }
+      else if (cameraId.length >= 12 && cameraId.slice(0, 12) == 'screenshare_') { cameraId = 'screenshare'; }
+    }
     if (this.selectedVideoCameraId.value === cameraId) { return; }
     this.selectedVideoCameraId.value = cameraId;
     this.selectedVideoCameraId.tracker.changed();
-  }
-
-  getWebcamsOnlyForModeratorOverride() {
-    if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) { return true; }
-    return HYBEFLEX_WEBCAMS_ONLY_FOR_MODERATOR_OVERRIDE;
-  }
-
-  isMultipleCamerasEnabled() {
-    return this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER;
-  }
-
-  canUnmute() {
-    if (this.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return true; }
-    return !!(this.speakingUser && this.speakingUser.userId == this.userId);
+    if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER && this.isWebSocketReady()) {
+      const tag = this.getInternalTagForStream(cameraId);
+      if (tag) {
+        this.connection.send(JSON.stringify({ t: 'setActiveStream', name: tag }));
+        this.lastSocketSend = (new Date()).getTime();
+      }
+    }
   }
 
   populateStreamAppMode(streams) {
@@ -474,6 +536,7 @@ class HybeFlexService {
       streams = streams.filter((stream) => {
         if (stream.userId == this.user.userId) { return true; }
         if (stream.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return true; }
+        if (stream.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_AUTOVIDEO) { return true; }
         if (stream.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_INTERPRETER) { return true; }
         if (this.speakingUser && stream.userId == this.speakingUser.userId) { return true; }
         return false;
@@ -528,8 +591,8 @@ class HybeFlexService {
   }
 
   initScreenCount(index, count) {
-    this.screenCount = +count; if (this.screenCount <= 0) { this.screenCount = 1; }
-    this.screenIndex = +index; if (this.screenIndex < 0) { this.screenIndex = 0; }
+    this.screenCount = +count; if (this.screenCount <= 0 || isNaN(this.screenCount)) { this.screenCount = 1; }
+    this.screenIndex = +index; if (this.screenIndex < 0 || isNaN(this.screenIndex)) { this.screenIndex = 0; }
     else if (this.screenIndex >= this.screenCount) { this.screenIndex = this.screenCount - 1; }
     while (this.screenLayout.length > this.screenCount) { this.screenLayout.pop(); }
     while (this.screenLayout.length < this.screenCount) { this.screenLayout.push({ screenIndex: this.screenLayout.length, streams: [] }); }

@@ -56,6 +56,7 @@ class PresentationArea extends PureComponent {
       isFullscreen: false,
     };
 
+    this.publishedStream = null;
     this.getSvgRef = this.getSvgRef.bind(this);
     this.setFitToWidth = this.setFitToWidth.bind(this);
     this.zoomChanger = this.zoomChanger.bind(this);
@@ -91,12 +92,15 @@ class PresentationArea extends PureComponent {
   }
 
   updateThumbnailPublish() {
-    if (this.svggroup) {
-      if (this.props.userIsPresenter) {
-        HybeFlexService.addPublishedStream(HybeFlexService.userId + '_presentation', this.svggroup);
-      } else {
-        HybeFlexService.removePublishedStream(HybeFlexService.userId + '_presentation');
+    if (this.props.userIsPresenter && this.svggroup) {
+      if (this.publishedStream) {
+        if (this.publishedStream.element === this.svggroup) { return; }
+        this.publishedStream.remove();
+        this.publishedStream = null;
       }
+      this.publishedStream = HybeFlexService.addPublishedStream('presentation', this.svggroup);
+    } else {
+      if (this.publishedStream) { this.publishedStream.remove(); this.publishedStream = null; }
     }
   }
 
@@ -148,9 +152,9 @@ class PresentationArea extends PureComponent {
   }
 
   componentWillUnmount() {
+    if (this.publishedStream) { this.publishedStream.remove(); this.publishedStream = null; }
     window.removeEventListener('resize', this.onResize);
     this.refPresentationContainer.removeEventListener('fullscreenchange', this.onFullscreenChange);
-    HybeFlexService.removePublishedStream(HybeFlexService.userId + '_presentation');
   }
 
   onFullscreenChange() {
@@ -499,12 +503,15 @@ class PresentationArea extends PureComponent {
           xmlns="http://www.w3.org/2000/svg"
           onClick={() => {
             if (isFullscreen) { return; }
-            if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return; }
+            if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
+                HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return; }
             if (getSwapLayout()) { MediaService.toggleSwapLayout(); }
-            HybeFlexService.setSelectedVideoCameraId(null);
+            HybeFlexService.setSelectedVideoCameraId('presentation');
           }}
-          className={styles.svgStyles + ((!isFullscreen && HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
-            selectedVideoCameraId) ? (' ' + styles.cursorPointer) : '')}
+          className={styles.svgStyles + ((!isFullscreen &&
+            (HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT ||
+             HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) &&
+            selectedVideoCameraId != 'presentation') ? (' ' + styles.cursorPointer) : '')}
         >
           <defs>
             <clipPath id="viewBox">

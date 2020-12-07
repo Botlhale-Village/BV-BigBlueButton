@@ -10,7 +10,7 @@ public:
     autoJoin: true
     listenOnlyMode: true
     forceListenOnly: false
-    skipCheck: false
+    skipCheck: true
     clientTitle: HybeFlex
     appName: HybeFlex HTML5 Client
     bbbServerVersion: 2.2

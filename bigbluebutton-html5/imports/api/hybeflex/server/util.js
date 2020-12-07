@@ -14,6 +14,8 @@ function getAppModeByUser(user) {
         case 'L': return HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER;
         case 'I': return HybeFlexAppMode.HYBEFLEX_APP_MODE_INTERPRETER;
         case 'S': return HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT;
+        case 'A': return HybeFlexAppMode.HYBEFLEX_APP_MODE_AUTOVIDEO;
+        case 'N': return HybeFlexAppMode.HYBEFLEX_APP_MODE_NORMAL;
         case 'X': if (HYBEFLEX_DEBUG_MODE_ENABLED) { return HybeFlexAppMode.HYBEFLEX_APP_MODE_DEBUG; }
       }
     }

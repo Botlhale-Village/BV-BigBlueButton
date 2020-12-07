@@ -31,6 +31,7 @@ class VideoListItem extends Component {
     this.thumbTag = null;
     this.activeCameraId = null;
     this.thumbwatch = null;
+    this.publishedStream = null;
 
     this.state = {
       videoIsReady: false,
@@ -49,6 +50,7 @@ class VideoListItem extends Component {
 
     this.activeCameraId = this.props.cameraId;
     if (this.thumbwatch) { this.thumbwatch.remove(); this.thumbwatch = null; }
+    if (this.publishedStream) { this.publishedStream.remove(); this.publishedStream = null; }
     if (this.videoTag) {
       webcamDraggableDispatch(
         {
@@ -58,6 +60,7 @@ class VideoListItem extends Component {
       );
       onMount(this.videoTag);
       this.videoTag.addEventListener('loadeddata', this.setVideoIsReady);
+      this.publishedStream = HybeFlexService.addPublishedStream(this.activeCameraId, this.videoTag);
     } else {
       this.thumbwatch = HybeFlexService.watchStreamThumbnail(this.activeCameraId, this.onThumbnailUpdate);
     }
@@ -68,12 +71,14 @@ class VideoListItem extends Component {
   componentDidUpdate() {
     if (this.activeCameraId !== this.props.cameraId) {
       if (this.thumbwatch) { this.thumbwatch.remove(); this.thumbwatch = null; }
+      if (this.publishedStream) { this.publishedStream.remove(); this.publishedStream = null; }
       if (this.videoTag) {
         this.activeCameraId = this.props.cameraId;
         this.videoTag.pause();
         this.videoTag.srcObject = null;
         this.setState({ videoIsReady: false });
         this.props.onMount(this.videoTag);
+        this.publishedStream = HybeFlexService.addPublishedStream(this.activeCameraId, this.videoTag);
       } else {
         this.activeCameraId = this.props.cameraId;
         this.thumbwatch = HybeFlexService.watchStreamThumbnail(this.activeCameraId, this.onThumbnailUpdate);
@@ -102,9 +107,9 @@ class VideoListItem extends Component {
 
   componentWillUnmount() {
     if (this.thumbwatch) { this.thumbwatch.remove(); this.thumbwatch = null; }
+    if (this.publishedStream) { this.publishedStream.remove(); this.publishedStream = null; }
     if (this.videoTag) { this.videoTag.removeEventListener('loadeddata', this.setVideoIsReady); }
     this.videoContainer.removeEventListener('fullscreenchange', this.onFullscreenChange);
-    HybeFlexService.removePublishedStream(this.props.cameraId);
   }
 
   onThumbnailUpdate(src) {
@@ -211,13 +216,15 @@ class VideoListItem extends Component {
               className={cx({
                 [styles.media]: true,
                 [styles.cursorPointer]: !isFullscreen &&
-                  HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
+                 (HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT ||
+                  HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) &&
                   HybeFlexService.selectedVideoCameraId.value != cameraId,
                 [styles.mirroredVideo]: this.mirrorOwnWebcam,
               })}
               onClick={() => {
                 if (isFullscreen) { return; }
-                if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return; }
+                if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
+                    HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return; }
                 if (getSwapLayout()) { MediaService.toggleSwapLayout(); }
                 HybeFlexService.setSelectedVideoCameraId(cameraId);
               }}
@@ -228,17 +235,19 @@ class VideoListItem extends Component {
               className={cx({
                 [styles.media]: true,
                 [styles.cursorPointer]: !isFullscreen &&
-                  HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
+                  (HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT ||
+                   HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) &&
                   HybeFlexService.selectedVideoCameraId.value != cameraId,
                 [styles.mirroredVideo]: this.mirrorOwnWebcam,
               })}
               onClick={() => {
                 if (isFullscreen) { return; }
-                if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return; }
+                if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
+                    HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return; }
                 if (getSwapLayout()) { MediaService.toggleSwapLayout(); }
                 HybeFlexService.setSelectedVideoCameraId(cameraId);
               }}
-              ref={(ref) => { this.videoTag = ref;  this.thumbTag = null; }}
+              ref={(ref) => { this.videoTag = ref; this.thumbTag = null; }}
               autoPlay
               playsInline
             />

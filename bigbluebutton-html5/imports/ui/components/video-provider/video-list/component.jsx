@@ -124,7 +124,7 @@ class VideoList extends Component {
     const { streams, selectedVideoCameraId, selectedVideoChildren } = this.props;
     let numItems = streams.length;
     if (selectedVideoChildren) { numItems += selectedVideoChildren.length; }
-    if (selectedVideoCameraId) { numItems--; }
+    if (selectedVideoCameraId && selectedVideoCameraId != 'presentation' && selectedVideoCameraId != 'screenshare') { numItems--; }
     if (numItems < 1 || !this.canvas || !this.grid) {
       return;
     }

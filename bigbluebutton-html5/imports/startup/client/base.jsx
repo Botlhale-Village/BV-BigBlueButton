@@ -21,6 +21,7 @@ import deviceInfo from '/imports/utils/deviceInfo';
 import getFromUserSettings from '/imports/ui/services/users-settings';
 import ControlPanel from '/imports/startup/controlpanel/component';
 import ScreenDisplay from '/imports/startup/screendisplay/component';
+import AutoVideoDisplay from '/imports/startup/autovideo/component';
 
 import HybeFlexService, { HybeFlexAppMode } from '/imports/api/hybeflex/client';
 
@@ -205,6 +206,7 @@ class Base extends Component {
       case HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING: return <LoadingScreen>{loading}</LoadingScreen>;
       case HybeFlexAppMode.HYBEFLEX_APP_MODE_DEBUG: return <ControlPanel />;
       case HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN: return <ScreenDisplay />;
+      case HybeFlexAppMode.HYBEFLEX_APP_MODE_AUTOVIDEO: return <AutoVideoDisplay />;
     }
     return <AppContainer {...this.props} baseControls={stateControls} />;
   }

@@ -37,6 +37,7 @@ class ScreenshareComponent extends React.Component {
     };
 
     this.thumbTag = null;
+    this.publishedStream = null;
     this.onVideoLoad = this.onVideoLoad.bind(this);
     this.onFullscreenChange = this.onFullscreenChange.bind(this);
     this.handleAllowAutoplay = this.handleAllowAutoplay.bind(this);
@@ -47,17 +48,13 @@ class ScreenshareComponent extends React.Component {
 
   componentDidMount() {
     const { presenterScreenshareHasStarted } = this.props;
-    this.screenshareStreamId = this.getScreenshareStreamId();
 
     presenterScreenshareHasStarted();
 
     this.screenshareContainer.addEventListener('fullscreenchange', this.onFullscreenChange);
     window.addEventListener('screensharePlayFailed', this.handlePlayElementFailed);
     
-    if (!this.props.isPresenter && HybeFlexService.isUsingThumbnails() && this.props.selectedVideoCameraId) {
-      this.thumbwatch = HybeFlexService.watchStreamThumbnail(this.screenshareStreamId, this.onThumbnailUpdate);
-      this.setState({ loaded: true });
-    }
+    this.updateThumbnailPublish();
   }
 
   componentWillReceiveProps(nextProps) {
@@ -65,15 +62,12 @@ class ScreenshareComponent extends React.Component {
       isPresenter, unshareScreen,
     } = this.props;
     if (isPresenter && !nextProps.isPresenter) {
-      HybeFlexService.removePublishedStream(HybeFlexService.userId + '_screen');
       unshareScreen();
     }
-    const screenshareStreamId = this.getScreenshareStreamId();
-    if (screenshareStreamId != this.screenshareStreamId) {
-      this.screenshareStreamId = screenshareStreamId;
-      if (this.thumbwatch) { this.thumbwatch.remove(); this.thumbwatch = null; }
-      this.thumbwatch = HybeFlexService.watchStreamThumbnail(this.screenshareStreamId, this.onThumbnailUpdate);
-    }
+  }
+
+  componentDidUpdate() {
+    this.updateThumbnailPublish();
   }
 
   componentWillUnmount() {
@@ -85,13 +79,34 @@ class ScreenshareComponent extends React.Component {
       toggleSwapLayout,
     } = this.props;
     if (this.thumbwatch) { this.thumbwatch.remove(); this.thumbwatch = null; }
-    HybeFlexService.removePublishedStream(HybeFlexService.userId + '_screen');
+    if (this.publishedStream) { this.publishedStream.remove(); this.publishedStream = null; }
     const layoutSwapped = getSwapLayout() && shouldEnableSwapLayout();
     if (layoutSwapped) toggleSwapLayout();
     presenterScreenshareHasEnded();
     unshareScreen();
     this.screenshareContainer.removeEventListener('fullscreenchange', this.onFullscreenChange);
     window.removeEventListener('screensharePlayFailed', this.handlePlayElementFailed);
+  }
+
+  updateThumbnailPublish() {
+    if (this.props.isPresenter && this.videoTag) {
+      if (this.thumbwatch) { this.thumbwatch.remove(); this.thumbwatch = null; }
+      if (this.publishedStream) {
+        if (this.publishedStream.element === this.videoTag) { return; }
+        this.publishedStream.remove();
+        this.publishedStream = null;
+      }
+      this.publishedStream = HybeFlexService.addPublishedStream('screenshare', this.videoTag);
+    } else {
+      if (this.publishedStream) { this.publishedStream.remove(); this.publishedStream = null; }
+      if (this.props.isPresenter || !HybeFlexService.isUsingThumbnails() ||
+         (this.props.selectedVideoCameraId && this.props.selectedVideoCameraId != 'screenshare')) {
+        if (this.thumbwatch) { this.thumbwatch.remove(); this.thumbwatch = null; }
+      } else {
+        this.thumbwatch = HybeFlexService.watchStreamThumbnail('screenshare', this.onThumbnailUpdate);
+        if (!this.state.loaded) { this.setState({ loaded: true }); }
+      }
+    }
   }
 
   onThumbnailUpdate(src) {
@@ -102,9 +117,7 @@ class ScreenshareComponent extends React.Component {
 
   onVideoLoad() {
     this.setState({ loaded: true });
-    if (this.props.isPresenter) {
-      HybeFlexService.addPublishedStream(HybeFlexService.userId, this.videoTag);
-    }
+    this.updateThumbnailPublish();
   }
 
   onFullscreenChange() {
@@ -203,18 +216,22 @@ class ScreenshareComponent extends React.Component {
           ref={(ref) => { this.screenshareContainer = ref; }}
         >
           {loaded && this.renderFullscreenButton()}
-          { (!isPresenter && HybeFlexService.isUsingThumbnails() && selectedVideoCameraId) ?
+          { (!isPresenter && HybeFlexService.isUsingThumbnails() &&
+            (!selectedVideoCameraId || selectedVideoCameraId != 'screenshare')) ?
             <img
               style={{ maxHeight: '100%', width: '100%', height: '100%' }}
               ref={(ref) => { this.thumbTag = ref; this.videoTag = null; }}
               onClick={() => {
                 if (isFullscreen) { return; }
-                if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return; }
+                if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
+                    HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return; }
                 if (getSwapLayout()) { MediaService.toggleSwapLayout(); }
-                HybeFlexService.setSelectedVideoCameraId(null);
+                HybeFlexService.setSelectedVideoCameraId('screenshare');
               }}
-              className={(!isFullscreen && HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
-                selectedVideoCameraId) ? styles.cursorPointer : ''}
+              className={(!isFullscreen &&
+                (HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT ||
+                 HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) &&
+                selectedVideoCameraId != 'screenshare') ? styles.cursorPointer : ''}
             /> :
             <video
               id="screenshareVideo"
@@ -225,12 +242,15 @@ class ScreenshareComponent extends React.Component {
               ref={(ref) => { this.videoTag = ref; this.thumbTag = null; }}
               onClick={() => {
                 if (isFullscreen) { return; }
-                if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return; }
+                if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
+                    HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return; }
                 if (getSwapLayout()) { MediaService.toggleSwapLayout(); }
-                HybeFlexService.setSelectedVideoCameraId(null);
+                HybeFlexService.setSelectedVideoCameraId('screenshare');
               }}
-              className={(!isFullscreen && HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT &&
-                selectedVideoCameraId) ? styles.cursorPointer : ''}
+              className={(!isFullscreen &&
+                (HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT ||
+                 HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) &&
+                selectedVideoCameraId != 'screenshare') ? styles.cursorPointer : ''}
               muted
             />
           }

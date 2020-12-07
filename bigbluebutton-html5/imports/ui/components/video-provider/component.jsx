@@ -12,8 +12,6 @@ import { tryGenerateIceCandidates } from '/imports/utils/safari-webrtc';
 import logger from '/imports/startup/client/logger';
 import _ from 'lodash';
 
-import HybeFlexService from '/imports/api/hybeflex/client';
-
 export const VideoProviderContext = createContext();
 
 // Default values and default empty object to be backwards compat with 2.2.
@@ -85,7 +83,6 @@ const propTypes = {
   streams: PropTypes.arrayOf(Array).isRequired,
   intl: PropTypes.objectOf(Object).isRequired,
   isUserLocked: PropTypes.bool.isRequired,
-  swapLayout: PropTypes.bool.isRequired,
   currentVideoPageIndex: PropTypes.number.isRequired,
   totalNumberOfStreams: PropTypes.number.isRequired,
 };
@@ -790,7 +787,6 @@ class VideoProvider extends Component {
       video.pause();
       video.srcObject = stream;
       video.load();
-      video.play().finally(function () { HybeFlexService.addPublishedStream(cameraId, video); });
 
       peer.attached = true;
       delete this.videoTags[cameraId];

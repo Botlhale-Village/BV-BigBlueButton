@@ -128,7 +128,9 @@ class VideoService {
   }
 
   joinVideo(deviceId) {
-    if (this.isConnected && HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return; }
+    if (this.isConnected &&
+      (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER &&
+       HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_AUTOVIDEO)) { return; }
     if (!this.pendingDeviceIds) { this.pendingDeviceIds = []; }
     this.pendingDeviceIds.push(deviceId);
     this.isConnecting = true;
@@ -139,12 +141,15 @@ class VideoService {
   }
 
   joinMultipleVideo(deviceIds) {
-    if (this.isConnected && HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return; }
+    if (this.isConnected &&
+      (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER &&
+       HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_AUTOVIDEO)) { return; }
     if (!deviceIds || !deviceIds.length) { return; }
     if (!this.pendingDeviceIds) { this.pendingDeviceIds = []; }
     this.pendingDeviceIds = this.pendingDeviceIds.concat(deviceIds);
     this.isConnecting = true;
-    if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) {
+    if (HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER &&
+        HybeFlexService.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_AUTOVIDEO) {
       while (this.pendingDeviceIds.length > 1) { this.pendingDeviceIds.pop(); }
     }
   }
@@ -331,7 +336,8 @@ class VideoService {
       name: vs.name,
     }));
 
-    if (HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
+    if (HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN ||
+        HybeFlexService.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_AUTOVIDEO) {
       return {
         streams: mappedStreams.sort(HybeFlexService.sortVideoScreenStreamsCallback),
         totalNumberOfStreams: mappedStreams.length

@@ -17,7 +17,7 @@ const withVideoConsumer = Component => props => (
 export default withVideoConsumer(withTracker((props) => {
   return {
     cameraId: props.cameraId,
-    numOfStreams: props.streams.length,
+    numOfStreams: props.streams ? props.streams.length : 0,
     userId: props.userId,
     name: props.name,
     voiceUser: VoiceUsers.findOne({ intId: props.userId }),

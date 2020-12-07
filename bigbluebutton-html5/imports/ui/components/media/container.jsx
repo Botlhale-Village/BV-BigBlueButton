@@ -165,11 +165,11 @@ export default withDraggableContext(withModalMounter(withTracker(() => {
 
   data.selectedVideoCameraId = HybeFlexService.getSelectedVideoCameraId();
 
-  if (data.selectedVideoCameraId) {
+  if (HybeFlexService.isWebcamStream(data.selectedVideoCameraId)) {
     const found = usersVideo.find((x) => x.cameraId == data.selectedVideoCameraId);
     if (!found) {
-      HybeFlexService.setSelectedVideoCameraId(null);
-      data.selectedVideoCameraId = null;
+      HybeFlexService.setSelectedVideoCameraId('presentation');
+      data.selectedVideoCameraId = 'presentation';
     } else {
       data.selectedVideoChildren = [data.children];
       data.children = <EmbeddedVideoListItemContainer
