@@ -71,7 +71,8 @@ class HybeFlexService {
     this.meetingId = null;
     this.userId = null;
     this.user = null;
-    this.speakingUser = null;
+    this.speakingUsers = [];
+    this.speakingUserIds = {};
     this.appMode = HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING;
     this.appModeTracker = new Tracker.Dependency();
     this.screenIndex = 0;
@@ -80,6 +81,8 @@ class HybeFlexService {
 
     this.opts = { };
     this.activeStream = null;
+    this.activeStreamTracker = new Tracker.Dependency();
+    this.classStreamSelected = true;
     this.roomStreamsByTag = {};
     this.roomStreamsById = {};
 
@@ -139,7 +142,7 @@ class HybeFlexService {
 
   canUnmute() {
     if (this.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return true; }
-    return !!(this.speakingUser && this.speakingUser.userId == this.userId);
+    return this.speakingUserIds[this.userId];
   }
 
   isWebcamStream(stream) {
@@ -280,14 +283,6 @@ class HybeFlexService {
             this.lastSocketSend = now;
             delete this.publishedStreamSubscribed[stream];
             delete this.publishingStreams[stream];
-            if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER ||
-                this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_AUTOVIDEO) {
-              const tag = this.getInternalTagForStream(stream);
-              if (tag) {
-                var opts = {}; opts[tag] = null;
-                this.connection.send(JSON.stringify({ t: 'roomStreamsSet', opts }));
-              }
-            }
           } catch (e) { }
         }
       });
@@ -299,14 +294,6 @@ class HybeFlexService {
             this.connection.send(JSON.stringify({ t: 'publishStream', stream, index }));
             this.lastSocketSend = now;
             this.publishedStreamSubscribed[stream] = true;
-            if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER ||
-                this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_AUTOVIDEO) {
-              const tag = this.getInternalTagForStream(stream);
-              if (tag) {
-                var opts = {}; opts[tag] = stream;
-                this.connection.send(JSON.stringify({ t: 'roomStreamsSet', opts }));
-              }
-            }
           } catch (e) { }
         }
       });
@@ -325,12 +312,7 @@ class HybeFlexService {
     if (stream == 'presentation' || stream == 'screenshare') { return stream; }
     if (stream.length >= 13 && stream.slice(0, 13) == 'presentation_') { return 'presentation'; }
     if (stream.length >= 12 && stream.slice(0, 12) == 'screenshare_') { return 'screenshare'; }
-    var tag = this.roomStreamsById[stream]; if (tag) { return tag; }
-    var webcamCount = 0;
-    do { tag = 'webcam' + (++webcamCount); } while (this.roomStreamsByTag[tag]);
-    this.roomStreamsById[stream] = tag;
-    this.roomStreamsByTag[tag] = stream;
-    return tag;
+    return this.roomStreamsById[stream];
   }
 
   onWebsocketInit() {
@@ -381,6 +363,7 @@ class HybeFlexService {
           case 'activeStream':
             this.activeStream = json.stream;
             this.setSelectedVideoCameraId(this.activeStream, true);
+            this.activeStreamTracker.changed();
             break;
         }
       } catch (e) { }
@@ -417,15 +400,19 @@ class HybeFlexService {
     this.userId = globalUserID = userId;
     if (!this.trackerComputation) {
       this.trackerComputation = Tracker.autorun(async () => {
-        this.speakingUser = Users.findOne({ meetingId: this.meetingId, isActiveSpeaker: true });
+        this.speakingUsers = Users.find({ meetingId: this.meetingId, isActiveSpeaker: true }).fetch();
+        this.speakingUserIds = {};
+        this.speakingUsers.forEach((item) => this.speakingUserIds[item.userId] = true);
         const user = Users.findOne({ userId: this.userId, approved: true });
         if (user && user.appMode) {
           this.user = user;
-          this.initDefaultOpts(user.appMode);
-          if (this.userId !== this.connectionUserId || !this.connection) { this.connectWebSocket(); }
-          if (HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED && user.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
-            const fields = user.name.split('_');
-            if (fields.length >= 3) { this.initScreenCount(this.opts.screenIndex = (+fields[1]) - 1, +(fields[2] || 1)); }
+          if (this.userId !== this.connectionUserId || !this.connection) {
+            this.initDefaultOpts(user.appMode);
+            this.connectWebSocket();
+            if (HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED && user.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
+              const fields = user.name.split('_');
+              if (fields.length >= 3) { this.initScreenCount(this.opts.screenIndex = (+fields[1]) - 1, +(fields[2] || 1)); }
+            }
           }
         }
       });
@@ -501,24 +488,46 @@ class HybeFlexService {
     });
   }
 
+  getActiveStream() {
+    this.activeStreamTracker.depend();
+    return this.activeStream;
+  }
+
   getSelectedVideoCameraId() {
     this.selectedVideoCameraId.tracker.depend();
     return this.selectedVideoCameraId.value;
   }
 
   setSelectedVideoCameraId(cameraId, fromSocket) {
-    if (cameraId) {
-      if (cameraId.length >= 13 && cameraId.slice(0, 13) == 'presentation_') { cameraId = 'presentation'; }
-      else if (cameraId.length >= 12 && cameraId.slice(0, 12) == 'screenshare_') { cameraId = 'screenshare'; }
-    }
-    if (this.selectedVideoCameraId.value === cameraId) { return; }
-    this.selectedVideoCameraId.value = cameraId;
-    this.selectedVideoCameraId.tracker.changed();
-    if (!fromSocket && this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER && this.isWebSocketReady()) {
-      const tag = this.getInternalTagForStream(cameraId);
-      if (tag) {
-        this.connection.send(JSON.stringify({ t: 'setActiveStream', name: tag }));
-        this.lastSocketSend = (new Date()).getTime();
+    if (cameraId == 'class') {
+      if (!this.classStreamSelected) {
+        this.classStreamSelected = true;
+        this.activeStreamTracker.depend();
+      }
+      this.setSelectedVideoCameraId(this.activeStream, true);
+    } else {
+      if (cameraId) {
+        if (cameraId.length >= 13 && cameraId.slice(0, 13) == 'presentation_') { cameraId = 'presentation'; }
+        else if (cameraId.length >= 12 && cameraId.slice(0, 12) == 'screenshare_') { cameraId = 'screenshare'; }
+      }
+      if (this.selectedVideoCameraId.value === cameraId) { return; }
+      if (!fromSocket || (this.classStreamSelected && fromSocket)) {
+        this.selectedVideoCameraId.value = cameraId;
+        this.selectedVideoCameraId.tracker.changed();
+      }
+      if (!fromSocket) {
+        if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) {
+          if (this.classStreamSelected) {
+            this.classStreamSelected = false;
+            this.activeStreamTracker.depend();
+          }
+        } else if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER && this.isWebSocketReady()) {
+          const tag = this.getInternalTagForStream(cameraId);
+          if (tag) {
+            this.connection.send(JSON.stringify({ t: 'setActiveStream', name: tag }));
+            this.lastSocketSend = (new Date()).getTime();
+          }
+        }
       }
     }
   }
@@ -550,7 +559,7 @@ class HybeFlexService {
         if (stream.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return true; }
         if (stream.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_AUTOVIDEO) { return true; }
         if (stream.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_INTERPRETER) { return true; }
-        if (this.speakingUser && stream.userId == this.speakingUser.userId) { return true; }
+        if (this.speakingUserIds[stream.userId]) { return true; }
         return false;
       });
     }
@@ -601,35 +610,76 @@ class HybeFlexService {
     while (this.screenLayout.length < this.screenCount) { this.screenLayout.push({ screenIndex: this.screenLayout.length, streams: [] }); }
   }
 
+  getVideoWallStreams(streams) {
+    var users = Users.find({
+      meetingId: this.meetingId,
+      approved: true,
+      connectionStatus: 'online',
+      appMode: HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT
+    }).fetch();
+    users.sort((a, b) => { return a.userId.localeCompare(b.userId); });
+    var streamByUserId = {};
+    streams.forEach((stream) => { streamByUserId[stream.userId] = stream; });
+    return users.map((user) => {
+      var stream = streamByUserId[user.userId];
+      if (!stream) { stream = { cameraId: null, userId: user.userId, name: user.name }; }
+      stream.handRaised = user.emoji == 'raiseHand';
+      stream.isActiveSpeaker = user.isActiveSpeaker;
+      return stream;
+    });
+  }
+
   buildScreenLayout(streams) {
     if (this.screenCount <= 0 || isNaN(this.screenCount)) { return; }
+    var activeSpeakers = streams.filter((item) => item.isActiveSpeaker);
+    streams = streams.filter((item) => !item.isActiveSpeaker);
     var i, layout, totalCapacity = 0, streamIndex = 0;
     var baseTotal = Math.floor(streams.length / this.screenCount);
     var cols = baseTotal ? Math.ceil(Math.sqrt(baseTotal)) : 1;
     var rows = baseTotal ? Math.ceil(baseTotal / cols) : 1;
     for (var i = 0; i < this.screenCount; i++) {
       var layout = this.screenLayout[i];
-      layout.cols = cols;
-      layout.rows = rows;
+      layout.screenIndex = i;
+      layout.screenCount = this.screenCount;
+      layout.opts = this.opts && this.opts.screens && this.opts.screens[i];
+      if (layout.opts && layout.opts.showActiveSpeaker && activeSpeakers.length) {
+        layout.cols = Math.ceil(Math.sqrt(activeSpeakers.length));
+        layout.rows = Math.ceil(activeSpeakers.length / layout.cols);
+        layout.activeSpeakerOnly = true;
+        layout.doListenAudio = true;
+      } else {
+        layout.cols = cols;
+        layout.rows = rows;
+        layout.activeSpeakerOnly = false;
+      }
       totalCapacity += (layout.count = cols * rows);
     }
     while (totalCapacity < streams.length) {
+      var increased = false;
       for (var i = 0; i < this.screenCount && totalCapacity < streams.length; i++) {
         var layout = this.screenLayout[i];
+        if (layout.activeSpeakerOnly) { continue; }
         if (layout.cols <= layout.rows) { layout.cols++; } else { layout.rows++; }
         totalCapacity -= layout.count;
         totalCapacity += (layout.count = layout.cols * layout.rows);
+        increased = true;
       }
+      if (!increased) { break; }
     }
     for (var i = 0; i < this.screenCount; i++) {
       var layout = this.screenLayout[i];
-      layout.screenIndex = i;
-      layout.screenCount = this.screenCount;
       while (layout.streams.length > layout.count) { layout.streams.pop(); }
       while (layout.streams.length < layout.count) { layout.streams.push({}); }
-      for (var j = 0; j < layout.count; j++) {
-        if (streamIndex >= streams.length) { layout.streams[j].stream = null; }
-        else { layout.streams[j].stream = streams[streamIndex++]; }
+      if (layout.activeSpeakerOnly) {
+        for (var j = 0; j < layout.count; j++) {
+          if (j >= activeSpeakers.length) { layout.streams[j].stream = null; }
+          else { layout.streams[j].stream = activeSpeakers[j]; }
+        }
+      } else {
+        for (var j = 0; j < layout.count; j++) {
+          if (streamIndex >= streams.length) { layout.streams[j].stream = null; }
+          else { layout.streams[j].stream = streams[streamIndex++]; }
+        }
       }
     }
     if (this.opts.maxStreamsBeforeThumbnails === 0) { this.opts.useThumbnails = 1; }

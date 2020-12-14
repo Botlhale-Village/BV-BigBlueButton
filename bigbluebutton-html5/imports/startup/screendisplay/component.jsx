@@ -37,19 +37,49 @@ const screenDbg = {
 };
 
 const rowStyle = {
+  position: 'relative',
   display: 'block',
   width: '100%',
   overflow: 'hidden',
 };
 
 const colStyle = {
+  position: 'relative',
   display: 'block',
   float: 'left',
   height: '100%',
   overflow: 'hidden',
 };
 
+const nameStyle = {
+  position: 'absolute',
+  zIndex: 1,
+  width: '100%',
+  height: '100%',
+  overflow: 'hidden',
+  color: 'white',
+  textAlign: 'center',
+  fontSize: '24px',
+  paddingTop: '100px',
+  background: '#444'
+};
+
+const handStyle = {
+  position: 'absolute',
+  zIndex: 10000,
+  width: '100%',
+  height: '100%',
+  overflow: 'hidden',
+  textAlign: 'right',
+  paddingLeft: '20px',
+  fontSize: '128px',
+  color: '#ff0',
+  textShadow: '0px 0px 10px #000',
+};
+
 const videoStyle = {
+  position: 'absolute',
+  zIndex: 1000,
   display: 'block',
   width: '100%',
   height: '100%',
@@ -106,12 +136,12 @@ export class ScreenDisplay extends Component {
     const style = { ...colStyle, width };
     for (let x = 0; x < layout.cols; x++) {
       if (x < (layout.cols - 1)) { style.borderRight = '1px solid black'; }
-      list.push(<div key={x} style={style}>{this.generateVideo(index + x)}</div>);
+      list.push(<div key={x} style={style}>{this.generateVideo(layout.streams[index + x], index + x)}</div>);
     }
     return list;
   }
 
-  generateVideo(index) {
+  generateVideo(layout, index) {
     if (HybeFlexService.isUsingThumbnails()) {
       return (
         <img
@@ -121,20 +151,24 @@ export class ScreenDisplay extends Component {
       );
     }
     return (
-      <video
-        muted
-        style={videoStyle}
-        ref={(ref) => { this.controller.setVideoTag(index, ref); }}
-        autoPlay
-        playsInline
-      />
+      <div>
+        {(layout && layout.stream && layout.stream.name) ? <div style={nameStyle}>{layout && layout.stream && layout.stream.name}</div> : null}
+        <video
+          muted
+          style={videoStyle}
+          ref={(ref) => { this.controller.setVideoTag(index, ref); }}
+          autoPlay
+          playsInline
+        />
+        {(layout && layout.stream && layout.stream.handRaised) ? <div style={handStyle}>✋</div> : null}
+      </div>
     );
   }
 }
 
 export default withTracker((props) => {
   HybeFlexService.appModeTracker.depend();
-  HybeFlexService.buildScreenLayout(VideoService.getVideoStreams().streams);
+  HybeFlexService.buildScreenLayout(HybeFlexService.getVideoWallStreams(VideoService.getVideoStreams().streams));
   return {
     screenLayout: HybeFlexService.getActiveScreenLayout(),
     ...props,

@@ -3,8 +3,8 @@ import Auth from '/imports/ui/services/auth';
 import { fetchWebRTCMappedStunTurnServers, getMappedFallbackStun } from '/imports/utils/fetchStunTurnServers';
 import playAndRetry from '/imports/utils/mediaElementPlayRetry';
 import logger from '/imports/startup/client/logger';
+import { WebRTCSFU } from '/imports/api/hybeflex/client';
 
-const SFU_URL = Meteor.settings.public.kurento.wsUrl;
 const MEDIA = Meteor.settings.public.media;
 const MEDIA_TAG = MEDIA.mediaTag.replace(/#/g, '');
 const GLOBAL_AUDIO_PREFIX = 'GLOBAL_AUDIO_';
@@ -77,7 +77,7 @@ export default class KurentoAudioBridge extends BaseAudioBridge {
         }, 'SFU audio bridge got STUN/TURN servers');
 
         const options = {
-          wsUrl: Auth.authenticateURL(SFU_URL),
+          wsUrl: Auth.authenticateURL(WebRTCSFU),
           userName: this.user.name,
           caleeName: `${GLOBAL_AUDIO_PREFIX}${this.voiceBridge}`,
           iceServers,

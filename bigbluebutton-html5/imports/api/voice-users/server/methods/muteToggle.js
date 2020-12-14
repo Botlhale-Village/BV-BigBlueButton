@@ -44,16 +44,14 @@ export default function muteToggle(uId) {
     if (!requester.isActiveSpeaker && requester.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return; }
   }
 
-  if (requester.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER && toggleOtherUser) {
-    const selector = { meetingId, userId: userToMute };
-    const otherUser = Users.findOne(selector);
-    if (otherUser && otherUser.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) {
-      if (otherUser.isActiveSpeaker && newMuteStatus) {
-        Users.update(selector, { $set: { isActiveSpeaker: false } }, function () { });
-      } else if (!otherUser.isActiveSpeaker && !newMuteStatus) {
-        Users.update(selector, { $set: { isActiveSpeaker: true } }, function () { });
-      }
-    } 
+  const otherUserSelector = { meetingId, userId: userToMute };
+  const otherUser = Users.findOne(otherUserSelector);
+  if (otherUser && otherUser.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) {
+    if (newMuteStatus && otherUser.isActiveSpeaker) {
+      Users.update(otherUserSelector, { $set: { isActiveSpeaker: false } }, function () { });
+    } else if (!newMuteStatus && !otherUser.isActiveSpeaker) {
+      Users.update(otherUserSelector, { $set: { isActiveSpeaker: true } }, function () { });
+    }
   }
 
   // if allowModsToUnmuteUsers is false, users will be kicked out for attempting to unmute others

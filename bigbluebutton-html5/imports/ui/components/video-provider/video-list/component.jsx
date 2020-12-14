@@ -5,6 +5,7 @@ import cx from 'classnames';
 import _ from 'lodash';
 import { styles } from './styles';
 import VideoListItemContainer from './video-list-item/container';
+import VideoItemClassContainer from './video-list-item/classcontainer';
 import { withDraggableConsumer } from '../../media/webcam-draggable-overlay/context';
 import AutoplayOverlay from '../../media/autoplay-overlay/component';
 import logger from '/imports/startup/client/logger';
@@ -121,10 +122,11 @@ class VideoList extends Component {
   }
 
   setOptimalGrid() {
-    const { streams, selectedVideoCameraId, selectedVideoChildren } = this.props;
+    const { streams, selectedVideoCameraId, selectedVideoChildren, showClassFeed } = this.props;
     let numItems = streams.length;
     if (selectedVideoChildren) { numItems += selectedVideoChildren.length; }
     if (selectedVideoCameraId && selectedVideoCameraId != 'presentation' && selectedVideoCameraId != 'screenshare') { numItems--; }
+    if (showClassFeed) { numItems++; }
     if (numItems < 1 || !this.canvas || !this.grid) {
       return;
     }
@@ -269,11 +271,18 @@ class VideoList extends Component {
       swapLayout,
       selectedVideoChildren,
       selectedVideoCameraId,
+      showClassFeed,
     } = this.props;
     const { focusedId } = this.state;
 
     const numOfStreams = streams.length;
-    const elements = streams.map((stream) => {
+    const elements = [];
+    
+    if (showClassFeed) {
+      elements.push(<VideoItemClassContainer key={'class'} />);
+    }
+    
+    streams.forEach((stream) => {
       const { cameraId, userId, name } = stream;
       if (selectedVideoCameraId == cameraId) { return null; }
       const isFocused = focusedId === cameraId;
@@ -288,7 +297,7 @@ class VideoList extends Component {
         }];
       }
 
-      return (
+      elements.push(
         <div
           key={cameraId}
           className={cx({

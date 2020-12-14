@@ -4,6 +4,7 @@ import Auth from '/imports/ui/services/auth';
 import Users from '/imports/api/users';
 import VideoStreams from '/imports/api/video-streams';
 import VoiceUsers from '/imports/api/voice-users';
+import Meetings from '/imports/api/meetings';
 
 export class ControlPanel extends Component {
   render() {

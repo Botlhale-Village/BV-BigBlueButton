@@ -4,6 +4,8 @@ import { fetchWebRTCMappedStunTurnServers, getMappedFallbackStun } from '/import
 import Auth from '/imports/ui/services/auth';
 import logger from '/imports/startup/client/logger';
 import VideoService from '/imports/ui/components/video-provider/service';
+import AudioManager from '/imports/ui/services/audio-manager';
+import Meetings from '/imports/api/meetings';
 
 import HybeFlexService from '/imports/api/hybeflex/client';
 
@@ -25,6 +27,7 @@ export default class VideoController {
     this.restartTimer = {};
     this.disposed = false;
     this.pingInterval = null;
+    this.listeningAudio = false;
 
     this.info = VideoService.getInfo();
 
@@ -82,6 +85,30 @@ export default class VideoController {
     });
 
     this.streamInfo.forEach((item) => { if (item) { item.update(); } });
+
+    if (this.screenLayout.doListenAudio) {
+      if (!this.listeningAudio) {
+        this.listeningAudio = true;
+        if (!AudioManager.initialized) {
+          const Meeting = Meetings.findOne({ meetingId: Auth.meetingID }, { fields: { 'voiceProp.voiceConf': 1 } });
+          AudioManager.init({
+            meetingId: Auth.meetingID,
+            userId: Auth.userID,
+            sessionToken: Auth.sessionToken,
+            username: Auth.fullname,
+            voiceBridge: Meeting.voiceProp.voiceConf,
+            microphoneLockEnforced: false,
+          });
+        }
+        // Run chromium with --autoplay-policy=no-user-gesture-required --use-fake-ui-for-media-stream
+        AudioManager.joinListenOnly();
+      }
+    } else {
+      if (this.listeningAudio) {
+        this.listeningAudio = false;
+        AudioManager.exitAudio();
+      }
+    }
   }
 
   dispose() {
@@ -103,6 +130,11 @@ export default class VideoController {
     // Close websocket connection to prevent multiple reconnects from happening
     this.onWsClose();
     this.ws.close();
+
+    if (this.listeningAudio) {
+      this.listeningAudio = false;
+      AudioManager.exitAudio();
+    }
   }
 
   // /////////////////// Internal /////////////////////////

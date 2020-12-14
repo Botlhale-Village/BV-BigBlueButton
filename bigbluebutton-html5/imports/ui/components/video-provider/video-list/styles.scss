@@ -266,3 +266,12 @@
     margin-right: 2px;
   }
 }
+
+.classFeedSelected {
+  border: 3px solid red;
+}
+
+.classFeedUnselected {
+  border: 3px solid black;
+  cursor: pointer;
+}
