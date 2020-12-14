@@ -81,7 +81,7 @@ const JoinVideoAllButton = ({
       onClick={handleOnClick}
       hideLabel
       color={hasVideoStream ? 'primary' : 'default'}
-      customIcon={hasVideoStream ? <div><i class="la la-video"></i><br></br><i class="la la-video"></i><i class="la la-video"></i></div> : <div><i class="la la-video-slash"></i><br></br><i class="la la-video-slash"></i><i class="la la-video-slash"></i></div>}
+      customIcon={hasVideoStream ? <div><i className="la la-video"></i><br></br><i className="la la-video"></i><i className="la la-video"></i></div> : <div><i className="la la-video-slash"></i><br></br><i className="la la-video-slash"></i><i className="la la-video-slash"></i></div>}
       // icon={hasVideoStream ? 'images' : 'video-slash'}
       ghost={!hasVideoStream}
       size="lg"

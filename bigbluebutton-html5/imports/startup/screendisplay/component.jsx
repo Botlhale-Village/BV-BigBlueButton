@@ -14,6 +14,28 @@ const screenStyle = {
   overflow: 'hidden',
 };
 
+const screenNum = {
+  position: 'fixed',
+  right: '10px',
+  width: '50%',
+  bottom: '10px',
+  height: '24px',
+  fontSize: '24px',
+  textAlign: 'right',
+  color: 'white'
+};
+
+const screenDbg = {
+  position: 'fixed',
+  right: '0px',
+  width: '100%',
+  bottom: '0px',
+  height: '100%',
+  fontSize: '48px',
+  textAlign: 'left',
+  color: 'blue'
+};
+
 const rowStyle = {
   display: 'block',
   width: '100%',
@@ -44,6 +66,13 @@ export class ScreenDisplay extends Component {
     this.controller.init();
   }
   
+  componentWillUpdate(newProps) {
+    if (this.controller.screenLayout !== newProps.screenLayout) {
+      this.controller.dispose();
+      this.controller = new VideoController(newProps.screenLayout);
+    }
+  }
+
   componentDidUpdate() {
     this.controller.update();
   }
@@ -53,7 +82,11 @@ export class ScreenDisplay extends Component {
   }
 
   render() {
-    return <div style={screenStyle}>{this.generateGrid(this.props.screenLayout)}</div>;
+    /*<div style={screenDbg}>{JSON.stringify(this.props.screenLayout, null, 2)}</div>*/
+    return <div style={screenStyle}>
+      {this.generateGrid(this.props.screenLayout)}
+      <div style={screenNum}>{this.props.screenLayout.screenIndex + 1} of {this.props.screenLayout.screenCount}</div>
+    </div>;
   }
 
   generateGrid(layout) {

@@ -9,13 +9,15 @@ import Auth from '/imports/ui/services/auth';
 export class AutoVideo extends Component {
   componentDidMount() {
     navigator.mediaDevices.getUserMedia({ audio: false, video: true }).then((stream) => {
-      navigator.mediaDevices.enumerateDevices().then((devices) => {
-        var deviceIds = {};
-        devices.forEach((device) => {
-          if (device.kind === 'videoinput') { deviceIds[device.deviceId] = true; }
+      setTimeout(() => {
+        navigator.mediaDevices.enumerateDevices().then((devices) => {
+          var deviceIds = {};
+          devices.forEach((device) => {
+            if (device.kind === 'videoinput') { deviceIds[device.deviceId] = true; }
+          });
+          VideoService.joinMultipleVideo(Object.keys(deviceIds));
         });
-        VideoService.joinMultipleVideo(Object.keys(deviceIds));
-      });
+      }, 100);
     });
   }
 

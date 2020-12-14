@@ -169,6 +169,8 @@ class HybeFlexService {
         this.opts.screenIndex = 0;
         this.opts.screens = [{ screenIndex: 0 }];
         break;
+      case HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT:
+        break;
     }
   }
 
@@ -278,6 +280,14 @@ class HybeFlexService {
             this.lastSocketSend = now;
             delete this.publishedStreamSubscribed[stream];
             delete this.publishingStreams[stream];
+            if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER ||
+                this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_AUTOVIDEO) {
+              const tag = this.getInternalTagForStream(stream);
+              if (tag) {
+                var opts = {}; opts[tag] = null;
+                this.connection.send(JSON.stringify({ t: 'roomStreamsSet', opts }));
+              }
+            }
           } catch (e) { }
         }
       });
@@ -370,7 +380,7 @@ class HybeFlexService {
             break;
           case 'activeStream':
             this.activeStream = json.stream;
-            this.setSelectedVideoCameraId(this.activeStream);
+            this.setSelectedVideoCameraId(this.activeStream, true);
             break;
         }
       } catch (e) { }
@@ -496,7 +506,7 @@ class HybeFlexService {
     return this.selectedVideoCameraId.value;
   }
 
-  setSelectedVideoCameraId(cameraId) {
+  setSelectedVideoCameraId(cameraId, fromSocket) {
     if (cameraId) {
       if (cameraId.length >= 13 && cameraId.slice(0, 13) == 'presentation_') { cameraId = 'presentation'; }
       else if (cameraId.length >= 12 && cameraId.slice(0, 12) == 'screenshare_') { cameraId = 'screenshare'; }
@@ -504,7 +514,7 @@ class HybeFlexService {
     if (this.selectedVideoCameraId.value === cameraId) { return; }
     this.selectedVideoCameraId.value = cameraId;
     this.selectedVideoCameraId.tracker.changed();
-    if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER && this.isWebSocketReady()) {
+    if (!fromSocket && this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER && this.isWebSocketReady()) {
       const tag = this.getInternalTagForStream(cameraId);
       if (tag) {
         this.connection.send(JSON.stringify({ t: 'setActiveStream', name: tag }));
@@ -592,6 +602,7 @@ class HybeFlexService {
   }
 
   buildScreenLayout(streams) {
+    if (this.screenCount <= 0 || isNaN(this.screenCount)) { return; }
     var i, layout, totalCapacity = 0, streamIndex = 0;
     var baseTotal = Math.floor(streams.length / this.screenCount);
     var cols = baseTotal ? Math.ceil(Math.sqrt(baseTotal)) : 1;
@@ -612,6 +623,8 @@ class HybeFlexService {
     }
     for (var i = 0; i < this.screenCount; i++) {
       var layout = this.screenLayout[i];
+      layout.screenIndex = i;
+      layout.screenCount = this.screenCount;
       while (layout.streams.length > layout.count) { layout.streams.pop(); }
       while (layout.streams.length < layout.count) { layout.streams.push({}); }
       for (var j = 0; j < layout.count; j++) {
@@ -628,7 +641,7 @@ class HybeFlexService {
 
   getActiveScreenLayout() {
     return this.screenLayout[this.screenIndex] ||
-      (this.screenLayout[this.screenIndex] = { screenIndex: this.screenIndex, streams: [] });
+      (this.screenLayout[this.screenIndex] = { screenIndex: this.screenIndex, screenCount: this.screenCount, streams: [] });
   }
 }
 

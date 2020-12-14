@@ -20,7 +20,9 @@ export default withTracker(() => {
   const users = Users.find({ meetingId: Auth.meetingID }).fetch();
   const videoStreams = VideoStreams.find().fetch();
   const voiceUsers = VoiceUsers.find().fetch();
+  const meeting = Meetings.findOne({ meetingId: Auth.meetingID });
   return {
+    meeting,
     users,
     videoStreams,
     voiceUsers,

@@ -6,7 +6,7 @@ import VoiceUsers from '/imports/api/voice-users';
 import Meetings from '/imports/api/meetings';
 import Logger from '/imports/startup/server/logger';
 
-import { HybeflexAppMode } from '/imports/api/hybeflex';
+import { HybeFlexAppMode } from '/imports/api/hybeflex';
 
 export default function muteToggle(uId) {
   const REDIS_CONFIG = Meteor.settings.private.redis;
@@ -21,10 +21,6 @@ export default function muteToggle(uId) {
     userId: requesterUserId,
   });
 
-  if (requester && requester.appMode == HybeflexAppMode.HYBEFLEX_APP_MODE_STUDENT) {
-    if (!requester.isActiveSpeaker) { return; }
-  }
-
   const voiceUser = VoiceUsers.findOne({
     intId: userToMute,
     meetingId,
@@ -33,10 +29,35 @@ export default function muteToggle(uId) {
   if (!requester || !voiceUser) return;
 
   const { listenOnly, muted } = voiceUser;
+  
   if (listenOnly) return;
 
+  const toggleOtherUser = requesterUserId !== userToMute;
+  const newMuteStatus = !muted;
+
+  if (!newMuteStatus || toggleOtherUser) { // Only if unmuting, or if muting someone not yourself:
+
+    // Allow only lecturers to unmute other users:
+    if (toggleOtherUser && requester.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER) { return; }
+
+    // Allow students to unmute only if they are active:
+    if (!requester.isActiveSpeaker && requester.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) { return; }
+  }
+
+  if (requester.appMode != HybeFlexAppMode.HYBEFLEX_APP_MODE_LECTURER && toggleOtherUser) {
+    const selector = { meetingId, userId: userToMute };
+    const otherUser = Users.findOne(selector);
+    if (otherUser && otherUser.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_STUDENT) {
+      if (otherUser.isActiveSpeaker && newMuteStatus) {
+        Users.update(selector, { $set: { isActiveSpeaker: false } }, function () { });
+      } else if (!otherUser.isActiveSpeaker && !newMuteStatus) {
+        Users.update(selector, { $set: { isActiveSpeaker: true } }, function () { });
+      }
+    } 
+  }
+
   // if allowModsToUnmuteUsers is false, users will be kicked out for attempting to unmute others
-  if (requesterUserId !== userToMute && muted) {
+  if (toggleOtherUser && muted) {
     const meeting = Meetings.findOne({ meetingId },
       { fields: { 'usersProp.allowModsToUnmuteUsers': 1 } });
     if (meeting.usersProp && !meeting.usersProp.allowModsToUnmuteUsers) {
