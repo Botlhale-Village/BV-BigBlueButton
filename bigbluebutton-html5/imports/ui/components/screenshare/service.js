@@ -10,6 +10,8 @@ import Auth from '/imports/ui/services/auth';
 import UserListService from '/imports/ui/components/user-list/service';
 import AudioService from '/imports/ui/components/audio/service';
 
+import HybeFlexService from '/imports/api/hybeflex/client';
+
 // when the meeting information has been updated check to see if it was
 // screensharing. If it has changed either trigger a call to receive video
 // and display it, or end the call and hide the video
@@ -66,6 +68,8 @@ const shareScreen = (onFail) => {
     stopWatching();
   }
 
+  HybeFlexService.setSelectedVideoCameraId('screenshare');
+
   BridgeService.getScreenStream().then(stream => {
     KurentoBridge.kurentoShareScreen(onFail, stream);
   }).catch(onFail);
@@ -77,6 +81,7 @@ const screenShareEndAlert = () => AudioService
     + '/resources/sounds/ScreenshareOff.mp3');
 
 const unshareScreen = () => {
+  HybeFlexService.setSelectedVideoCameraId('presentation');
   KurentoBridge.kurentoExitScreenShare();
   screenShareEndAlert();
 };

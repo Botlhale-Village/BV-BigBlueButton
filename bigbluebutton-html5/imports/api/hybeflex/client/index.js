@@ -153,6 +153,18 @@ class HybeFlexService {
     return true;
   }
 
+  isScreenshareStream(stream) {
+    if (!stream) { return false; }
+    if (stream == 'screenshare' || (stream.length >= 12 && stream.slice(0, 12) == 'screenshare_')) { return true; }
+    return false;
+  }
+
+  isPresentationStream(stream) {
+    if (!stream) { return false; }
+    if (stream == 'presentation' || (stream.length >= 13 && stream.slice(0, 13) == 'presentation_')) { return true; }
+    return false;
+  }
+
   getFromUserSettings(setting, defaultValue) {
     const value = this.opts[setting];
     if (value !== undefined) { return value; }

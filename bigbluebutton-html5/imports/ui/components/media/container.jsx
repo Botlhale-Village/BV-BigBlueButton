@@ -119,20 +119,17 @@ export default withDraggableContext(withModalMounter(withTracker(() => {
   const { viewParticipantsWebcams, viewScreenshare } = dataSaving;
   const hidePresentation = getFromUserSettings('bbb_hide_presentation', LAYOUT_CONFIG.hidePresentation);
   const autoSwapLayout = getFromUserSettings('bbb_auto_swap_layout', LAYOUT_CONFIG.autoSwapLayout);
+  const showScreenShare = (MediaService.shouldShowScreenshare() && (viewScreenshare || MediaService.isUserPresenter()));
   const { current_presentation: hasPresentation } = MediaService.getPresentationInfo();
   const data = {
-    children: <DefaultContent {...{ autoSwapLayout, hidePresentation }} />,
+    //children: <DefaultContent {...{ autoSwapLayout, hidePresentation }} />,
     audioModalIsOpen: Session.get('audioModalIsOpen'),
   };
 
-  if (MediaService.shouldShowWhiteboard() && !hidePresentation) {
+  //if (MediaService.shouldShowWhiteboard() && !hidePresentation) {
     data.currentPresentation = MediaService.getPresentationInfo();
     data.children = <PresentationPodsContainer />;
-  }
-
-  if (MediaService.shouldShowScreenshare() && (viewScreenshare || MediaService.isUserPresenter())) {
-    data.children = <ScreenshareContainer />;
-  }
+  //}
 
   const { streams: usersVideo } = VideoService.getVideoStreams();
   data.usersVideo = usersVideo;
@@ -164,13 +161,27 @@ export default withDraggableContext(withModalMounter(withTracker(() => {
   data.webcamPlacement = Storage.getItem('webcamPlacement');
 
   data.selectedVideoCameraId = HybeFlexService.getSelectedVideoCameraId();
+  data.selectedVideoChildren = [];
+
+  if (HybeFlexService.isScreenshareStream(data.selectedVideoCameraId)) {
+    if (showScreenShare) {
+      data.selectedVideoChildren.push(data.children);
+      data.children = <ScreenshareContainer />;
+    } else {
+      data.selectedVideoCameraId = 'presentation';
+    }
+  } else {
+    if (showScreenShare) {
+      data.selectedVideoChildren.push(<ScreenshareContainer />);
+    }
+  }
 
   if (HybeFlexService.isWebcamStream(data.selectedVideoCameraId)) {
     const found = usersVideo.find((x) => x.cameraId == data.selectedVideoCameraId);
     if (!found) {
       data.selectedVideoCameraId = 'presentation';
     } else {
-      data.selectedVideoChildren = [data.children];
+      data.selectedVideoChildren.push(data.children);
       data.children = <EmbeddedVideoListItemContainer
         streams={usersVideo}
         cameraId={data.selectedVideoCameraId}

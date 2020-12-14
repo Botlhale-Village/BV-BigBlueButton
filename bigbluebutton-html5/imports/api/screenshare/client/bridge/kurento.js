@@ -4,8 +4,9 @@ import { fetchWebRTCMappedStunTurnServers, getMappedFallbackStun } from '/import
 import playAndRetry from '/imports/utils/mediaElementPlayRetry';
 import logger from '/imports/startup/client/logger';
 
+import { WebRTCSFU } from '/imports/api/hybeflex/client';
+
 const SFU_CONFIG = Meteor.settings.public.kurento;
-const SFU_URL = SFU_CONFIG.wsUrl;
 const CHROME_DEFAULT_EXTENSION_KEY = SFU_CONFIG.chromeDefaultExtensionKey;
 const CHROME_CUSTOM_EXTENSION_KEY = SFU_CONFIG.chromeExtensionKey;
 const CHROME_SCREENSHARE_SOURCES = SFU_CONFIG.screenshare.chromeScreenshareSources;
@@ -140,7 +141,7 @@ export default class KurentoScreenshareBridge {
       iceServers = getMappedFallbackStun();
     } finally {
       const options = {
-        wsUrl: Auth.authenticateURL(SFU_URL),
+        wsUrl: Auth.authenticateURL(WebRTCSFU),
         iceServers,
         logger,
         userName: getUsername(),
@@ -193,7 +194,7 @@ export default class KurentoScreenshareBridge {
       iceServers = getMappedFallbackStun();
     } finally {
       const options = {
-        wsUrl: Auth.authenticateURL(SFU_URL),
+        wsUrl: Auth.authenticateURL(WebRTCSFU),
         chromeExtension: CHROME_EXTENSION_KEY,
         chromeScreenshareSources: CHROME_SCREENSHARE_SOURCES,
         firefoxScreenshareSource: FIREFOX_SCREENSHARE_SOURCE,

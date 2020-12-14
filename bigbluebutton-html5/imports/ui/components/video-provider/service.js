@@ -14,7 +14,7 @@ import getFromUserSettings from '/imports/ui/services/users-settings';
 import logger from '/imports/startup/client/logger';
 import _ from 'lodash';
 
-import HybeFlexService, { HybeFlexAppMode, WebRTCSFU as SFU_URL } from '/imports/api/hybeflex/client';
+import HybeFlexService, { HybeFlexAppMode, WebRTCSFU } from '/imports/api/hybeflex/client';
 
 const CAMERA_PROFILES = Meteor.settings.public.kurento.cameraProfiles;
 const MULTIPLE_CAMERAS = Meteor.settings.public.app.enableMultipleCameras;
@@ -212,7 +212,7 @@ class VideoService {
   }
 
   getAuthenticatedURL() {
-    return Auth.authenticateURL(SFU_URL);
+    return Auth.authenticateURL(WebRTCSFU);
   }
 
   isPaginationEnabled () {
