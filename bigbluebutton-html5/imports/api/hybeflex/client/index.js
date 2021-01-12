@@ -4,8 +4,11 @@ import ReconnectingWebSocket from 'reconnecting-websocket';
 import { HybeFlexAppMode } from './..';
 import Users from '/imports/api/users';
 import { base64ArrayBuffer } from './base64';
+import { telemetry } from './telemetry';
 
 export * from './..';
+
+telemetry.init();
 
 const {
   webcamsOnlyForModeratorOverride: HYBEFLEX_WEBCAMS_ONLY_FOR_MODERATOR_OVERRIDE,
@@ -123,6 +126,13 @@ class HybeFlexService {
           this.connection.send(JSON.stringify({ t: 'ping' }));
           this.lastSocketSend = now;
         } catch (e) { }
+      }
+      var videos = document.getElementsByTagName('video');
+      for (var i = videos.length - 1; i >= 0; i--) {
+        var el = videos[i];
+        if (el.srcObject && el.paused) {
+          el.play();
+        }
       }
     }, 5000);
   }
@@ -343,6 +353,17 @@ class HybeFlexService {
     }));
     this.updateStreamSubscriptions();
     this.lastSocketSend = (new Date()).getTime();
+    telemetry.setCallback((obj) => {
+      if (!this.connection && this.connection.readyState !== 1) { return false; }
+      this.connection.send(JSON.stringify({ t: 'tel', data: obj }));
+      return true;
+    });
+  }
+  
+  onWebsocketClose() {
+    telemetry.setCallback(null);
+    this.appMode = HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING;
+    this.appModeTracker.changed();
   }
 
   onWebsocketMessage(msg) {
@@ -354,6 +375,9 @@ class HybeFlexService {
           case 'redirect':
             globalSocketUrl = json.server;
             this.connectWebSocket();
+            break;
+          case 'resetClient':
+            window.location.reload();
             break;
           case 'optSet':
             if (json.opts) {
@@ -404,6 +428,8 @@ class HybeFlexService {
     this.connection.binaryType = 'arraybuffer';
     this.connection.addEventListener('open', this.onWebsocketInit.bind(this));
     this.connection.addEventListener('message', this.onWebsocketMessage.bind(this));
+    this.connection.addEventListener('close', this.onWebsocketClose.bind(this));
+    this.connection.addEventListener('error', this.onWebsocketClose.bind(this));
     this.connection.reconnect();
   }
   
@@ -429,6 +455,7 @@ class HybeFlexService {
         }
       });
     }
+    telemetry.send('info', 'User ' + userId + ' joined meeting ' + meetingId);
   }
 
   pushThumbnail(index, blob) {
@@ -663,8 +690,9 @@ class HybeFlexService {
         layout.cols = cols;
         layout.rows = rows;
         layout.activeSpeakerOnly = false;
+        layout.doListenAudio = false;
       }
-      totalCapacity += (layout.count = cols * rows);
+      totalCapacity += (layout.count = layout.cols * layout.rows);
     }
     while (totalCapacity < streams.length) {
       var increased = false;
@@ -683,12 +711,12 @@ class HybeFlexService {
       while (layout.streams.length > layout.count) { layout.streams.pop(); }
       while (layout.streams.length < layout.count) { layout.streams.push({}); }
       if (layout.activeSpeakerOnly) {
-        for (var j = 0; j < layout.count; j++) {
+        for (var j = 0; j < layout.streams.length; j++) {
           if (j >= activeSpeakers.length) { layout.streams[j].stream = null; }
           else { layout.streams[j].stream = activeSpeakers[j]; }
         }
       } else {
-        for (var j = 0; j < layout.count; j++) {
+        for (var j = 0; j < layout.streams.length; j++) {
           if (streamIndex >= streams.length) { layout.streams[j].stream = null; }
           else { layout.streams[j].stream = streams[streamIndex++]; }
         }
