@@ -32,7 +32,7 @@ class Media extends Component {
     this.refContainer = React.createRef();
   }
 
-  componentWillUpdate() {
+  UNSAFE_componentWillUpdate() {
     window.dispatchEvent(new Event('resize'));
   }
 

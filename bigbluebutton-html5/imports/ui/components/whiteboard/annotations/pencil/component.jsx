@@ -88,7 +88,7 @@ export default class PencilDrawComponent extends Component {
     return this.props.version !== nextProps.version;
   }
 
-  componentWillUpdate(nextProps) {
+  UNSAFE_componentWillUpdate(nextProps) {
     const { annotation, slideWidth, slideHeight } = nextProps;
     if (annotation.points.length !== this.props.annotation.points.length) {
       this.path = this.getCoordinates(annotation, slideWidth, slideHeight);

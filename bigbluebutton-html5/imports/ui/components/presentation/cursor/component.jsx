@@ -65,7 +65,7 @@ export default class Cursor extends Component {
     };
   }
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     const {
       cursorX,
       cursorY,
@@ -94,7 +94,7 @@ export default class Cursor extends Component {
     this.calculateCursorLabelBoxDimensions();
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const {
       presenter,
       isMultiUser,

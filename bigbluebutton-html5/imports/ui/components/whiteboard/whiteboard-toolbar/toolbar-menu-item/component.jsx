@@ -19,7 +19,7 @@ export default class ToolbarMenuItem extends Component {
   }
 
   // generating a unique ref string for the toolbar-item
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     this.uniqueRef = _.uniqueId('toolbar-menu-item');
   }
 

@@ -3,6 +3,7 @@ import { defineMessages } from 'react-intl';
 import PropTypes from 'prop-types';
 import { findDOMNode } from 'react-dom';
 import UserAvatar from '/imports/ui/components/user-avatar/component';
+import Button from '/imports/ui/components/button/component';
 import Icon from '/imports/ui/components/icon/component';
 import Dropdown from '/imports/ui/components/dropdown/component';
 import DropdownTrigger from '/imports/ui/components/dropdown/trigger/component';
@@ -14,6 +15,7 @@ import lockContextContainer from '/imports/ui/components/lock-viewers/context/co
 import { withModalMounter } from '/imports/ui/components/modal/service';
 import RemoveUserModal from '/imports/ui/components/modal/remove-user/component';
 import _ from 'lodash';
+import cx from 'classnames';
 import { Session } from 'meteor/session';
 import { styles } from './styles';
 import UserName from '../user-name/component';
@@ -164,7 +166,7 @@ class UserDropdown extends PureComponent {
     this.makeDropdownItem = this.makeDropdownItem.bind(this);
   }
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     this.title = _.uniqueId('dropdown-title-');
     this.seperator = _.uniqueId('action-separator-');
   }
@@ -610,6 +612,21 @@ class UserDropdown extends PureComponent {
               isMe,
             }}
           />}
+          {
+            (currentUser.role === ROLE_MODERATOR && (user.emoji == 'raiseHand' || user.isActiveSpeaker)) ?
+            <Button
+              className={cx(styles.btn)}
+              onClick={(e) => {
+                this.props.toggleVoice(user.userId);
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              color={user.isActiveSpeaker ? 'primary' : 'default'}
+              icon={'hand-paper'}
+              size="lg"
+              circle
+            /> : null
+          }
           {<UserIcons
             {...{
               user,

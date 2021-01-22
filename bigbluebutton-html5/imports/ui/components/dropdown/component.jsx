@@ -72,7 +72,7 @@ class Dropdown extends Component {
     this.handleWindowClick = this.handleWindowClick.bind(this);
   }
 
-  componentWillUpdate(nextProps, nextState) {
+  UNSAFE_componentWillUpdate(nextProps, nextState) {
     return nextState.isOpen ? screenreaderTrap.trap(this.dropdown) : screenreaderTrap.untrap();
   }
 

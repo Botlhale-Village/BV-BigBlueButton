@@ -1,5 +1,3 @@
-import { appendFile } from "fs";
-
 export const telemetry = window.telemetry = (function () {
   var consoleLog = console.log;
   var consoleWarm = console.warn;

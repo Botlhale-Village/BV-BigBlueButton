@@ -76,6 +76,7 @@ class Base extends Component {
       loading: false,
       meetingExisted: false,
     };
+
     this.updateLoadingState = this.updateLoadingState.bind(this);
   }
 
@@ -201,7 +202,7 @@ class Base extends Component {
       }
       return (<MeetingEnded code={codeError} />);
     }
-
+    
     switch (appMode) {
       case HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING: return <LoadingScreen>{loading}</LoadingScreen>;
       case HybeFlexAppMode.HYBEFLEX_APP_MODE_DEBUG: return <ControlPanel />;
@@ -233,6 +234,7 @@ Base.propTypes = propTypes;
 Base.defaultProps = defaultProps;
 
 const BaseContainer = withTracker(() => {
+//  debugger;
   const {
     locale,
     animations,
@@ -392,7 +394,7 @@ const BaseContainer = withTracker(() => {
     User,
     isMeteorConnected: Meteor.status().connected,
     meetingExist: !!meeting,
-    meetingHasEnded: !!meeting && meeting.meetingEnded,
+    meetingHasEnded: !!(meeting && meeting.meetingEnded),
     meetingIsBreakout: AppService.meetingIsBreakout(),
     subscriptionsReady: Session.get('subscriptionsReady'),
     loggedIn,

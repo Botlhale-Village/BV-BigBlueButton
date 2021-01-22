@@ -89,7 +89,7 @@ export default class VideoController {
     if (this.screenLayout.doListenAudio) {
       if (!this.listeningAudio) {
         this.listeningAudio = true;
-        if (!AudioManager.initialized) {
+       /* if (!AudioManager.initialized) {
           const Meeting = Meetings.findOne({ meetingId: Auth.meetingID }, { fields: { 'voiceProp.voiceConf': 1 } });
           AudioManager.init({
             meetingId: Auth.meetingID,
@@ -99,15 +99,15 @@ export default class VideoController {
             voiceBridge: Meeting.voiceProp.voiceConf,
             microphoneLockEnforced: false,
           });
-        }
+        }*/
         // Run chromium with --autoplay-policy=no-user-gesture-required --use-fake-ui-for-media-stream
-        AudioManager.joinListenOnly();
+       // AudioManager.joinListenOnly();
       }
     } else {
-      if (this.listeningAudio) {
+    /*  if (this.listeningAudio) {
         this.listeningAudio = false;
         AudioManager.exitAudio();
-      }
+      }*/
     }
   }
 

@@ -25,7 +25,22 @@ export const WebRTCSFU = 'wss://' + currentDomainName + '/bbb-webrtc-sfu';
 var globalUserID = null;
 var globalSocketUrl = HybeflexSocketUrl;
 
-var svgToImage = (function () {
+const ajaxPost = function (url, data) {
+  return new Promise(function (resolve, reject) {
+    var http = new XMLHttpRequest();
+    http.onreadystatechange = function () {
+      if (http.readyState === 4) {
+        if (http.status >= 200 && http.status < 300) { resolve(true); }
+        else { reject(http.statusText || 'Error'); }
+      }
+    };
+    http.open('POST', url, true);
+    http.setRequestHeader('Content-Type', 'application/json');
+    http.send(JSON.stringify(data || {}));
+  });
+};
+
+const svgToImage = (function () {
   var lastSvgImageTag = new Image();
   var lastSvgImageBackTag = new Image();
   var lastSvgImageBackSrc = '';
@@ -110,14 +125,18 @@ class HybeFlexService {
     this.watchingStreamsSubscribed = {};
     
     this.lastSocketSend = (new Date()).getTime();
+    this.checkAppTimer = null;
 
     this.sortVideoScreenStreamsCallback = this.sortVideoScreenStreamsCallback.bind(this);
     this.sortUserListCallback = this.sortUserListCallback.bind(this);
     this.filterUserListCallback = this.filterUserListCallback.bind(this);
     this.watchStreamThumbnail = this.watchStreamThumbnail.bind(this);
     this.addPublishedStream = this.addPublishedStream.bind(this);
+    this.isWebSocketReady = this.isWebSocketReady.bind(this);
+    this.checkAppMode = this.checkAppMode.bind(this);
 
     setInterval(() => {
+      this.checkAppMode();
       if (!this.isWebSocketReady()) { return; }
       this.updateStreamSubscriptions();
       const now = (new Date()).getTime();
@@ -337,11 +356,41 @@ class HybeFlexService {
     return this.roomStreamsById[stream];
   }
 
-  onWebsocketInit() {
-    if (this.user && this.appMode === HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING) {
+  initTelemetryCallback(extId) {
+    const fields = (extId || '').split('_');
+    const userId = fields[1];
+    const roomId = fields[2];
+    telemetry.setCallback((obj) => {
+      if (this.isWebSocketReady()) {
+        this.connection.send(JSON.stringify({ t: 'tel', data: obj }));
+        return true;
+      } else {
+        return ajaxPost(HybeflexAPIUrl + '/telemetry', {
+          u: userId,
+          r: roomId,
+          t: obj.t,
+          m: obj.m,
+          c: obj.c,
+        });
+      }
+    });
+  }
+
+  checkAppMode() {
+    if (!this.isWebSocketReady()) {
+      if (this.appMode !== HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING) {
+        this.appMode = HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING;
+        this.appModeTracker.changed();
+      }
+      if (this.checkAppTimer !== null) { this.checkAppTimer = null; }
+      this.checkAppTimer = setTimeout(() => { this.checkAppTimer = null; this.checkAppMode(); }, 200);
+    } else if (this.user && this.appMode !== this.user.appMode) {
       this.appMode = this.user.appMode;
       this.appModeTracker.changed();
     }
+  }
+
+  onWebsocketInit() {
     this.watchingStreamsSubscribed = {};
     this.publishedStreamSubscribed = {};
     this.connection.send(JSON.stringify({
@@ -353,21 +402,17 @@ class HybeFlexService {
     }));
     this.updateStreamSubscriptions();
     this.lastSocketSend = (new Date()).getTime();
-    telemetry.setCallback((obj) => {
-      if (!this.connection && this.connection.readyState !== 1) { return false; }
-      this.connection.send(JSON.stringify({ t: 'tel', data: obj }));
-      return true;
-    });
+    this.sendActiveSpeakers();
+    this.checkAppMode();
   }
-  
+
   onWebsocketClose() {
-    telemetry.setCallback(null);
-    this.appMode = HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING;
-    this.appModeTracker.changed();
+    this.checkAppMode();
   }
 
   onWebsocketMessage(msg) {
     if (!msg || !msg.data) { return; }
+    this.checkAppMode();
     if (msg.data.constructor === String) {
       try {
         const json = JSON.parse(msg.data);
@@ -377,12 +422,13 @@ class HybeFlexService {
             this.connectWebSocket();
             break;
           case 'resetClient':
+            try { window.location.reload(true); } catch (e) { }
             window.location.reload();
             break;
           case 'optSet':
             if (json.opts) {
               Object.keys(json.opts).forEach(key => { this.opts[key] = json.opts[key]; });
-              if (this.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN && (this.opts.screenIndex || this.opts.screens)) {
+              if (this.user.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN && (this.opts.screenIndex || this.opts.screens)) {
                 this.initScreenCount(this.opts.screenIndex, (this.opts.screens && this.opts.screens.length) || 1);
               }
               this.appModeTracker.changed();
@@ -418,9 +464,20 @@ class HybeFlexService {
     }
   }
 
+  sendActiveSpeakers() {
+    if (!this.isWebSocketReady()) { return; }
+    this.connection.send(JSON.stringify({
+      t: 'activeSpeaker',
+      opts: this.speakingUserIds
+    }));
+    this.lastSocketSend = (new Date()).getTime();
+  }
+
   connectWebSocket() {
-    this.appMode = HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING;
-    this.appModeTracker.changed();
+    if (this.appMode !== HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING) {
+      this.appMode = HybeFlexAppMode.HYBEFLEX_APP_MODE_LOADING;
+      this.appModeTracker.changed();
+    }
     if (this.connection) { this.connection.close(); }
     const id = (this.user && this.user.extId) || this.userId;
     this.connectionUserId = this.userId;
@@ -441,10 +498,13 @@ class HybeFlexService {
         this.speakingUsers = Users.find({ meetingId: this.meetingId, isActiveSpeaker: true }).fetch();
         this.speakingUserIds = {};
         this.speakingUsers.forEach((item) => this.speakingUserIds[item.userId] = true);
+        this.sendActiveSpeakers();
         const user = Users.findOne({ userId: this.userId, approved: true });
         if (user && user.appMode) {
           this.user = user;
           if (this.userId !== this.connectionUserId || !this.connection) {
+            telemetry.send('info', 'User ' + this.userId + ' joined meeting ' + meetingId + ' mode ' + this.user.appMode);
+            this.initTelemetryCallback(user.extId);
             this.initDefaultOpts(user.appMode);
             this.connectWebSocket();
             if (HYBEFLEX_HACKY_MODE_DETERMINATION_ENABLED && user.appMode == HybeFlexAppMode.HYBEFLEX_APP_MODE_VIDEOSCREEN) {
@@ -455,7 +515,6 @@ class HybeFlexService {
         }
       });
     }
-    telemetry.send('info', 'User ' + userId + ' joined meeting ' + meetingId);
   }
 
   pushThumbnail(index, blob) {

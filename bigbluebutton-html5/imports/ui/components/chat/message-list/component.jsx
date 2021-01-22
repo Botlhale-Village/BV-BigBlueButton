@@ -67,7 +67,7 @@ class MessageList extends Component {
     scrollArea.addEventListener('scroll', this.handleScrollChange, false);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const {
       chatId,
     } = this.props;
@@ -106,7 +106,7 @@ class MessageList extends Component {
     return false;
   }
 
-  componentWillUpdate(nextProps) {
+  UNSAFE_componentWillUpdate(nextProps) {
     const {
       chatId,
     } = this.props;

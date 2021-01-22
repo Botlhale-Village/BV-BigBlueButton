@@ -188,6 +188,8 @@ const userFindSorting = {
   phoneUser: 1,
   name: 1,
   userId: 1,
+  emoji: 1,
+  isActiveSpeaker: 1
 };
 
 const getUsers = () => {
@@ -195,7 +197,8 @@ const getUsers = () => {
     .find({
       meetingId: Auth.meetingID,
       connectionStatus: 'online',
-    }, { fields: userFindSorting })
+    })
+    //}, { fields: userFindSorting })
     .fetch();
 
   users = users.filter(HybeFlexService.filterUserListCallback);
@@ -413,6 +416,14 @@ const toggleVoice = (userId) => {
   if (userId === Auth.userID) {
     AudioService.toggleMuteMicrophone();
   } else {
+    var user = Users.findOne({ meetingId: Auth.meetingID, userId: userId });
+    if (!user.isActiveSpeaker) {
+      if (user.emoji == 'raiseHand') {
+        makeCall('setEmojiStatus', userId, 'none');
+      }
+      var speakingUsers = Users.find({ meetingId: Auth.meetingID, isActiveSpeaker: true }).fetch();
+      speakingUsers.forEach((item) => makeCall('toggleVoice', item.userId));
+    }
     makeCall('toggleVoice', userId);
     logger.info({
       logCode: 'usermenu_option_mute_toggle_audio',

@@ -57,7 +57,7 @@ class ScreenshareComponent extends React.Component {
     this.updateThumbnailPublish();
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const {
       isPresenter, unshareScreen,
     } = this.props;

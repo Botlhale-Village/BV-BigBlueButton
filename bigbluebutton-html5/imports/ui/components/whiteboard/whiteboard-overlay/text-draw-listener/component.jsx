@@ -69,7 +69,7 @@ export default class TextDrawListener extends Component {
 
   // If the activeId suddenly became empty - this means the shape was deleted
   // While the user was drawing it. So we are resetting the state.
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     const { drawSettings } = this.props;
     const nextDrawsettings = nextProps.drawSettings;
 

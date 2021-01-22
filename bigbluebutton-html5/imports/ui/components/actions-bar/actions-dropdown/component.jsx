@@ -88,7 +88,7 @@ class ActionsDropdown extends PureComponent {
     this.handleExternalVideoClick = this.handleExternalVideoClick.bind(this);
   }
 
-  componentWillUpdate(nextProps) {
+  UNSAFE_componentWillUpdate(nextProps) {
     const { amIPresenter: isPresenter } = nextProps;
     const { amIPresenter: wasPresenter, mountModal } = this.props;
     if (wasPresenter && !isPresenter) {

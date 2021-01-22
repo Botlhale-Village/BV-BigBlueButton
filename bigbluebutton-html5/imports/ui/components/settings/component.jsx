@@ -108,7 +108,7 @@ class Settings extends Component {
     this.handleSelectTab = this.handleSelectTab.bind(this);
   }
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     const { availableLocales } = this.props;
     availableLocales.then((locales) => {
       this.setState({ availableLocales: locales });
